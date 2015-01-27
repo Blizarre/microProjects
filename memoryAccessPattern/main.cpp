@@ -18,9 +18,9 @@ template<size_t SD>
 std::unique_ptr<std::array<Payload, SD> > createData()
 {
 	auto ret = std::make_unique<std::array<Payload, SD> >();
-	for (size_t counter = 0; counter < ret->size(); counter ++)
+	for (size_t counter = 0; counter < ret->size(); counter++)
 	{
-        // fill the data with a value easy to check
+		// fill the data with a value easy to check
 		(*ret)[counter].data = counter + 10;
 	}
 	return ret;
@@ -49,25 +49,25 @@ public:
 		m_checkPoint = m_clock.now();
 	}
 
-    // Reset the timer to "now"
+	// Reset the timer to "now"
 	void reset()
 	{
 		m_checkPoint = m_clock.now();
 	}
 
-    // Print the time elapsed since the last call to reset() or checkPoint(). The message must contains the string "{TIME}"
-    // That will be replaced by the time in milliseconds.
-    // Return the time elapsed in ms
-    long long checkPoint(char* message)
-    {
-        std::string strMsg = std::string(message);
-        return checkPoint(strMsg);
-    }
+	// Print the time elapsed since the last call to reset() or checkPoint(). The message must contains the string "{TIME}"
+	// That will be replaced by the time in milliseconds.
+	// Return the time elapsed in ms
+	long long checkPoint(char* message)
+	{
+		std::string strMsg = std::string(message);
+		return checkPoint(strMsg);
+	}
 
-    // Print the time elapsed since the last call to reset() or checkPoint(). The message must contains the string "{TIME}"
-    // That will be replaced by the time in milliseconds
-    // Return the time elapsed in ms
-    long long checkPoint(std::string& message)
+	// Print the time elapsed since the last call to reset() or checkPoint(). The message must contains the string "{TIME}"
+	// That will be replaced by the time in milliseconds
+	// Return the time elapsed in ms
+	long long checkPoint(std::string& message)
 	{
 		std::string placeholder = "{TIME}";
 		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(m_clock.now() - m_checkPoint).count();
@@ -94,7 +94,7 @@ void accessElementsOfArray(const std::array<size_t, SR>& elementPosition, const 
 	for (const size_t& pos : elementPosition)
 	{
 		// a simple check to make sure the compiler will not remove everything
-		if (data[pos].data != pos + 10) 
+		if (data[pos].data != pos + 10)
 			throw std::bad_exception("What ?");
 	}
 };
@@ -106,7 +106,7 @@ void main()
 	const size_t dataSize(100000000);
 	const size_t accessSize(1000000);
 
-    long long randomAccess(0), sequentialAccess(0), sequentialAccessReversed(0);
+	long long randomAccess(0), sequentialAccess(0), sequentialAccessReversed(0);
 	const int nbReplay(20);
 
 	auto data = createData<dataSize>();
@@ -138,20 +138,20 @@ void main()
 		sequentialAccess += tp.checkPoint("Pseudo sequential access: {TIME} ms.");
 	}
 
-    std::sort(offsetAccess->begin(), offsetAccess->end(), [](size_t& a, size_t& b) { return a > b; });
+	std::sort(offsetAccess->begin(), offsetAccess->end(), [](size_t& a, size_t& b) { return a > b; });
 
-    tp.checkPoint("Sort (reversed): {TIME} ms.");
+	tp.checkPoint("Sort (reversed): {TIME} ms.");
 
-    for (int i = 0; i < nbReplay; i++)
-    {
-        accessElementsOfArray(*offsetAccess, *data);
-        sequentialAccessReversed += tp.checkPoint("Pseudo sequential access (reversed): {TIME} ms.");
-    }
+	for (int i = 0; i < nbReplay; i++)
+	{
+		accessElementsOfArray(*offsetAccess, *data);
+		sequentialAccessReversed += tp.checkPoint("Pseudo sequential access (reversed): {TIME} ms.");
+	}
 
 
-    std::cout << std::endl;
-	std::cout << "Total time random: "               << randomAccess               << "ms (mean: " << randomAccess / nbReplay             << "ms)" << std::endl;
-	std::cout << "Total time sequential: "           << sequentialAccess           << "ms (mean: " << sequentialAccess / nbReplay         << "ms)" << std::endl;
-    std::cout << "Total time sequential reversed: "  << sequentialAccessReversed   << "ms (mean: " << sequentialAccessReversed / nbReplay << "ms)" << std::endl;
+	std::cout << std::endl;
+	std::cout << "Total time random: " << randomAccess << "ms (mean: " << randomAccess / nbReplay << "ms)" << std::endl;
+	std::cout << "Total time sequential: " << sequentialAccess << "ms (mean: " << sequentialAccess / nbReplay << "ms)" << std::endl;
+	std::cout << "Total time sequential reversed: " << sequentialAccessReversed << "ms (mean: " << sequentialAccessReversed / nbReplay << "ms)" << std::endl;
 	std::cout << "Performance (sequential/random): " << static_cast<float>(sequentialAccess) / randomAccess;
 }
