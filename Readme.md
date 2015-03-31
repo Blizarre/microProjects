@@ -1,5 +1,20 @@
 This repo is a collection of very small programs, usually only one file.
 
+## switchVsIfElse ##
+
+And now, is it better to use a big switch or a big if else (yes that's ugly, but still....) ? 
+
+There are 11 "case", not including the default. The script will iterate over a large number of values and almost always reach the default, which should be the worst case.
+Next step: try the average case with fewer default.
+    
+    $ g++ --std=c++11 test.cpp -O3 -Wall
+    $ ./a.out  10000000 25
+    duration of bigSwitch: 26.2693ms.
+    duration of bigIfElse: 52.2365ms.
+    end value 23818167
+
+
+
 ## memoryAccessPattern
 
 Is there any difference in speed if you acces a big array randomly or sequentially ?
