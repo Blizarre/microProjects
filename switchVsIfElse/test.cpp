@@ -177,7 +177,7 @@ void startBenchmark(const int nbIterations, int val) {
     SimpleChrono chrBigSwitch, chrBigIfElse;
 
     // Loop until we get enough sampling, around 5s. of data
-    while(chrBigSwitch.elapsedMs() + chrBigIfElse.elapsedMs() < 5000) {    
+    while(chrBigSwitch.elapsedMs() + chrBigIfElse.elapsedMs() < 5000.0d) {    
         chrBigSwitch.start();
         for(int i = 0; i < nbIterations; i++) {
             val += bigSwitch(i);
@@ -194,6 +194,6 @@ void startBenchmark(const int nbIterations, int val) {
     std::cout << "Average duration of bigSwitch: " << chrBigSwitch.avgElapsedMs() << "ms." <<std::endl;
     std::cout << "Average duration of bigIfElse: " << chrBigIfElse.avgElapsedMs() << "ms." <<std::endl;
 
-    std::cout << "A Switch is " << static_cast<int>(100 * chrBigSwitch.avgElapsedMs() / chrBigIfElse.avgElapsedMs()) << "% as long as a IfElse" <<std::endl;
+    std::cout << "A Switch is " << static_cast<int>(100.0d * chrBigSwitch.avgElapsedMs() / chrBigIfElse.avgElapsedMs()) << "% as long as a IfElse" <<std::endl;
     std::cout << "end value " << val << std::endl;
 }
