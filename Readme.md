@@ -27,7 +27,7 @@ Question: How does the branch prediction handle a large number of if/Else ? Does
 For more information, see: 
 * http://en.wikipedia.org/wiki/Switch_statement#Compilation
 * http://en.wikipedia.org/wiki/Branch_predictor
-* Machine code : http://741MHz.github.io
+* Machine code : http://741mhz.com/switch/
 
 ## memoryAccessPattern
 
