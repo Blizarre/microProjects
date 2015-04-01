@@ -171,6 +171,8 @@ protected:
 };
 
 
+// val is used as a starting point, then printed. This is to make sure that the compiler
+// will not remove all the code because it has no side effect.
 void startBenchmark(const int nbIterations, int val) {
     SimpleChrono chrBigSwitch, chrBigIfElse;
 
