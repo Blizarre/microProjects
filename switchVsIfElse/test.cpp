@@ -6,6 +6,7 @@ void startBenchmark(const int nbIterations, int val);
 void printUsage(std::string & exeName);
 int bigSwitch(int a);
 int bigIfElse(int a);
+class SimpleChrono;
 
 int bigSwitch(int a) {
     int value;
@@ -138,7 +139,7 @@ int main(const int argc, const char * argv[]) {
 }
 
 
-// Small helper class
+// Small helper class, compute the cumulative duration spent between the calls to begin() and end()
 class SimpleChrono {
 
 public:
@@ -148,39 +149,49 @@ public:
     }
     
     void end() {
-        m_end = std::chrono::steady_clock::now();
+        auto m_end = std::chrono::steady_clock::now();
+         m_duration += std::chrono::duration_cast<millisecDuration>(m_end - m_start);
+         nbStep++;
     }
     
     double elapsedMs() const {
-        millisecDuration duration = std::chrono::duration_cast<millisecDuration>(m_end - m_start);
-        return duration.count();
+        return m_duration.count();
+    }
+
+    double avgElapsedMs() const {
+        return elapsedMs() / nbStep;
     }
     
 protected:
 
     typedef std::chrono::duration<double, std::milli> millisecDuration;
-    std::chrono::time_point<std::chrono::steady_clock> m_start, m_end;
+    std::chrono::time_point<std::chrono::steady_clock> m_start;
+    millisecDuration m_duration = std::chrono::duration<double>::zero();
+    int nbStep = 0;
 };
 
 
 void startBenchmark(const int nbIterations, int val) {
-    SimpleChrono s;
+    SimpleChrono chrBigSwitch, chrBigIfElse;
 
-    s.start();
-    for(int i = 0; i < nbIterations; i++) {
-        val += bigSwitch(i%110);
-    }
-    s.end();
-    std::cout << "duration of bigSwitch: " << s.elapsedMs() << "ms." <<std::endl;
-    
-    s.start();
-    for(int i = 0; i < nbIterations; i++) {
-        val += bigIfElse(i%110);
-    }
-    s.end();
-    std::cout << "duration of bigIfElse: " << s.elapsedMs() << "ms." <<std::endl;
+    // Loop until we get enough sampling, around 5s. of data
+    while(chrBigSwitch.elapsedMs() + chrBigIfElse.elapsedMs() < 5000) {    
+        chrBigSwitch.start();
+        for(int i = 0; i < nbIterations; i++) {
+            val += bigSwitch(i);
+        }
+        chrBigSwitch.end();
 
+        chrBigIfElse.start();
+        for(int i = 0; i < nbIterations; i++) {
+            val += bigIfElse(i);
+        }
+        chrBigIfElse.end();
+    }
+
+    std::cout << "Average duration of bigSwitch: " << chrBigSwitch.avgElapsedMs() << "ms." <<std::endl;
+    std::cout << "Average duration of bigIfElse: " << chrBigIfElse.avgElapsedMs() << "ms." <<std::endl;
+
+    std::cout << "A Switch is " << static_cast<int>(100 * chrBigSwitch.avgElapsedMs() / chrBigIfElse.avgElapsedMs()) << "% as long as a IfElse" <<std::endl;
     std::cout << "end value " << val << std::endl;
-    
-    
 }
