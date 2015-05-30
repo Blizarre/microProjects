@@ -75,7 +75,7 @@ def drawvector(im, pos, angle):
     length = BLOCK_SIZE / 4
     beginOfLine = ( int(center[0] - math.cos(angle) * length), int(center[1] - math.sin(angle) * length))
     endOfLine = ( int(center[0] + math.cos(angle) * length), int(center[1] + math.sin(angle) * length))
-    cv2.line(im, beginOfLine, endOfLine, (255, 0, 0), 5 )
+    cv2.line(im, beginOfLine, endOfLine, (255, 255, 255), 5 )
 
 # return a mask with zeros for the background, and weights proportionals to the norm of the gradients for the stars
 def getMask(dx, dy):

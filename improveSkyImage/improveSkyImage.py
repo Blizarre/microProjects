@@ -5,6 +5,7 @@ import sys
 
 BLOCK_SIZE = 256
 FINAL_THRESHOLD = 20
+GAMMA_VALUE = 0.5
 
 
 # return the padding needed to be a mutiple of BLOCK_SIZE
@@ -54,8 +55,15 @@ if __name__ == "__main__":
 
     print "Smoothing the result with a small kernel to remove hard thresholded edges"
     kernel = cv2.getGaussianKernel(3, -1)
-    smooth = cv2.filter2D(imThresholded, -1, kernel)
-    cv2.imshow("Smoothened", smooth)
+    smooth = cv2.filter2D(imThresholded, -1, kernel).astype(np.float32)
+
+    print "Gamma correction"
+    # To get around memory limits (3 float32 channels!) , I try to use operations that do not generate temporary matrix
+    smooth /= 255.0
+    cv2.pow(smooth, GAMMA_VALUE, smooth)
+    smooth *= 255.0
+    smooth = smooth.astype(np.uint8)
+    cv2.imshow("Result", smooth)
 
     print "Writing the result"
     cv2.imwrite(sys.argv[2], smooth[:originalSize[0], :originalSize[1], :])
