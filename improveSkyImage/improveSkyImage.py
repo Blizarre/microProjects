@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     print "Loading image"
     image = cv2.imread(sys.argv[1], cv2.IMREAD_COLOR)
-    if( image is None):
+    if image is None:
         print "Couldn't open image", sys.argv[1]
 
     image = image.astype(np.uint8)
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     for i in range(0, background.shape[0]):
         for j in range(0, background.shape[1]):
             for color in range(3):
-                background[i, j, color] = cv2.calcHist([getblock(image, i, j)], [color], None, [255], [0,255]).argmax()
+                background[i, j, color] = cv2.calcHist([getblock(image, i, j)], [color], None, [255], [0, 255]).argmax()
 
     print "Generating the background image by upscaling"
     background = cv2.resize(background, ( image.shape[1], image.shape[0] ), interpolation=cv2.INTER_CUBIC)

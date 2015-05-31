@@ -22,7 +22,7 @@ def getblock(image, col, row):
 #   cv2.CV_LOAD_IMAGE_COLOR, cv2.CV_LOAD_IMAGE_GRAYSCALE, cv2.CV_LOAD_IMAGE_UNCHANGED
 # dataType can be :
 #   np.float32, np.float64, np.uint8, np.int32, ...
-def loadImage(path, imtype = cv2.CV_LOAD_IMAGE_UNCHANGED, datatype = np.uint8):
+def loadimage(path, imtype=cv2.CV_LOAD_IMAGE_UNCHANGED, datatype=np.uint8):
     print "Loading image:", path
     image = cv2.imread(path, imtype)
 
@@ -33,11 +33,11 @@ def loadImage(path, imtype = cv2.CV_LOAD_IMAGE_UNCHANGED, datatype = np.uint8):
 
 
 # show the log of the histogram of matrix.
-def showLogHistogram(matrix, label):
+def showloghistogram(matrix, label):
     plt.figure("Log Histogram")
 
     for m, l in zip(matrix, label):
-        plt.hist( m.ravel(), bins=50, label=l)
+        plt.hist(m.ravel(), bins=50, label=l)
 
     plt.legend()
     ax = plt.subplot(1,1,1)
@@ -45,7 +45,7 @@ def showLogHistogram(matrix, label):
     plt.show()
 
 # return the value of the angle between (0, PI)
-def normAngle( angle ):
+def normangle(angle):
     while angle > math.pi:
         angle -= math.pi
 
@@ -55,12 +55,12 @@ def normAngle( angle ):
     return angle
 
 # estimate the angle using the gradient of the image dx and dy, using the mask (non zero values are weight)
-def estimateAngle(dx, dy, mask):
-    candidates = np.where( mask > 0)
+def estimate_angle(dx, dy, mask):
+    candidates = np.where(mask > 0)
     angles = np.zeros_like(mask, dtype=np.float32)
 
     for row,col in zip(candidates[0], candidates[1]):
-        angles[row, col] = normAngle( math.atan2(dy[row, col], dx[row, col]) - math.pi / 2.0 )
+        angles[row, col] = normangle( math.atan2(dy[row, col], dx[row, col]) - math.pi / 2.0 )
 
     angleHisto = cv2.calcHist([angles], [0], mask=mask, histSize=[100], ranges=(0, math.pi) )
 
@@ -78,9 +78,9 @@ def drawvector(im, pos, angle):
     cv2.line(im, beginOfLine, endOfLine, (255, 255, 255), 5 )
 
 # return a mask with zeros for the background, and weights proportionals to the norm of the gradients for the stars
-def getMask(dx, dy):
+def getmask(dx, dy):
     minAmountOfFreqData = 500
-    threshold = max( np.amax(dx), np.amax(dy) )
+    threshold = max(np.amax(dx), np.amax(dy))
     maskx = masky = np.zeros_like(dx)
 
     # we need a minimum of minAmountOfFreqData to get a reliable angle estimate, which is why we try to lower the threshold until 
@@ -104,10 +104,10 @@ if __name__ == "__main__":
         print "Usage: ", sys.argv[0], "<inputImage> <outputImage>"
         sys.exit(2)
 
-    im = loadImage(sys.argv[1], cv2.CV_LOAD_IMAGE_GRAYSCALE)
+    im = loadimage(sys.argv[1], cv2.CV_LOAD_IMAGE_GRAYSCALE)
 
     # no calculations will be made on imColor, it is used only to generate the output image
-    imColor = loadImage(sys.argv[1], cv2.CV_LOAD_IMAGE_COLOR)
+    imColor = loadimage(sys.argv[1], cv2.CV_LOAD_IMAGE_COLOR)
     imColor = imColor * 1.5 + 20
 
     print "image shape:", im.shape
@@ -117,8 +117,8 @@ if __name__ == "__main__":
     im = im[ :getcorrectsize(im.shape[0]), :getcorrectsize(im.shape[1]) ]
 
     # Estimation of the gradient along the x and y axis
-    dx = cv2.Sobel(im,cv2.CV_32F,1,0,ksize=5)
-    dy = cv2.Sobel(im,cv2.CV_32F,0,1,ksize=5)
+    dx = cv2.Sobel(im, cv2.CV_32F, 1, 0, ksize=5)
+    dy = cv2.Sobel(im, cv2.CV_32F, 0, 1, ksize=5)
 
     nbRows, nbCols = (im.shape[0]/BLOCK_SIZE, im.shape[1]/BLOCK_SIZE)
 
@@ -128,13 +128,13 @@ if __name__ == "__main__":
             dxBlock = getblock(dx, i, j)
             dyBlock = getblock(dy, i, j)
             # create the mask for the current block: the angle will be estimated only for the stars and not the background
-            mask = getMask(dxBlock, dyBlock)
+            mask = getmask(dxBlock, dyBlock)
 
-            angle = estimateAngle(dxBlock, dyBlock, mask)
+            angle = estimate_angle(dxBlock, dyBlock, mask)
             print i, ",", j, "angle:" + str(angle)
 
             # paint the angle vector on the output image
-            drawvector(imColor, (i,j), angle)
+            drawvector(imColor, (i, j), angle)
 
     print "writing to: ", sys.argv[2]
     cv2.imwrite(sys.argv[2], imColor)
