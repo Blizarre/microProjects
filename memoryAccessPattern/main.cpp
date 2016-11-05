@@ -1,5 +1,6 @@
 #include <iostream>
 #include <array>
+#include <algorithm>
 #include <memory>
 #include <random>
 #include <chrono>
@@ -34,8 +35,9 @@ template<typename T, size_t SR>
 std::unique_ptr<std::array<T, SR> > createRndAccessData(T minValue, T maxValue)
 {
 	auto ret = std::make_unique<std::array<T, SR> >();
-	std::uniform_int<T> uniform(minValue, maxValue);
-	std::minstd_rand generator;
+	std::random_device rd;
+	std::default_random_engine generator(rd());
+	std::uniform_int_distribution<T> uniform(minValue, maxValue);
 
 	std::for_each(ret->begin(), ret->end(), [&uniform, &generator](T & val) { val = uniform(generator); });
 	return ret;
@@ -58,7 +60,7 @@ public:
 	// Print the time elapsed since the last call to reset() or checkPoint(). The message must contains the string "{TIME}"
 	// That will be replaced by the time in milliseconds.
 	// Return the time elapsed in ms
-	long long checkPoint(char* message)
+	long long checkPoint(const char* message)
 	{
 		std::string strMsg = std::string(message);
 		return checkPoint(strMsg);
@@ -67,7 +69,7 @@ public:
 	// Print the time elapsed since the last call to reset() or checkPoint(). The message must contains the string "{TIME}"
 	// That will be replaced by the time in milliseconds
 	// Return the time elapsed in ms
-	long long checkPoint(std::string& message)
+	long long checkPoint(std::string message)
 	{
 		std::string placeholder = "{TIME}";
 		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(m_clock.now() - m_checkPoint).count();
@@ -95,12 +97,12 @@ void accessElementsOfArray(const std::array<size_t, SR>& elementPosition, const 
 	{
 		// a simple check to make sure the compiler will not remove everything
 		if (data[pos].data != pos + 10)
-			throw std::bad_exception("What ?");
+			throw std::logic_error("Impossible");
 	}
 };
 
 
-void main()
+int main()
 {
 	TimePoints tp;
 	const size_t dataSize(100000000);
@@ -153,5 +155,7 @@ void main()
 	std::cout << "Total time random: " << randomAccess << "ms (mean: " << randomAccess / nbReplay << "ms)" << std::endl;
 	std::cout << "Total time sequential: " << sequentialAccess << "ms (mean: " << sequentialAccess / nbReplay << "ms)" << std::endl;
 	std::cout << "Total time sequential reversed: " << sequentialAccessReversed << "ms (mean: " << sequentialAccessReversed / nbReplay << "ms)" << std::endl;
-	std::cout << "Performance (sequential/random): " << static_cast<float>(sequentialAccess) / randomAccess;
+	std::cout << "Performance (sequential/random): " << static_cast<float>(sequentialAccess) / randomAccess << std::endl;;
+
+    return 0;
 }
