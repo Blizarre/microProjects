@@ -45,19 +45,20 @@ def compute_similarity_matrix(blocks):
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
-        print "Usage: ", sys.argv[0], "<inputImage> <inputImage> <outputImage>"
+        print ("Usage: ", sys.argv[0], "<inputImage> <inputImage> <outputImage>")
         sys.exit(2)
 
     input_images_names = sys.argv[1:-2]
+    output_image_name = sys.argv[-1]
     input_images = []
     input_images_orig = []
 
-    print "Loading input images"
+    print ("Loading input images")
     for file_name in input_images_names:
         image = cv2.imread(file_name, cv2.IMREAD_GRAYSCALE)
         image_orig = cv2.imread(file_name, cv2.IMREAD_COLOR)
         if image is None:
-            print "Couldn't open image", sys.argv[1]
+            print ("Couldn't open image", sys.argv[1])
         image = image.astype(np.int16)
         originalSize = image.shape
         image = cv2.copyMakeBorder(
@@ -69,7 +70,7 @@ if __name__ == "__main__":
 
     output_image = np.zeros_like(image_orig)
 
-    selected_image = np.zeros((image.shape[0] / BLOCK_SIZE, image.shape[1] / BLOCK_SIZE), dtype=np.int32)
+    selected_image = np.zeros((image.shape[0] // BLOCK_SIZE, image.shape[1] // BLOCK_SIZE), dtype=np.int32)
 
     for blkx in range(selected_image.shape[0]):
         for blky in range(selected_image.shape[1]):
@@ -79,6 +80,8 @@ if __name__ == "__main__":
             selected_image[blkx, blky] = np.argmin(np.sum(similarity_matrix, axis=1))
             setblock(output_image, blocks_orig[selected_image[blkx, blky]], blkx, blky)
 
-    # cv2.imshow("test", output_image)
-    # cv2.waitKey(0)
-    cv2.imwrite("test.jpg", output_image)
+    cv2.namedWindow('test', cv2.WINDOW_NORMAL)
+    cv2.imshow("test", output_image)
+    ret_code=cv2.waitKey(0);
+    if ret_code==115: # if 's' is pressed
+        cv2.imwrite(output_image_name, output_image)
