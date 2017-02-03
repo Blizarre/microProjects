@@ -36,48 +36,54 @@ def compute_similarity_matrix(blocks):
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
-        print "Usage: ", sys.argv[0], "<inputImage> <inputImage> <outputImage>"
+        print("Usage: ", sys.argv[0], "<inputImage> <inputImage> <outputImage>")
         sys.exit(2)
 
     input_images_names = sys.argv[1:-2]
+    output_image_name = sys.argv[-1]
     input_images = []
     input_images_orig = []
 
-    print "Loading input images"
+    print("Loading input images")
     for file_name in input_images_names:
         image = cv2.imread(file_name, cv2.IMREAD_COLOR)
         if image is None:
-            print "Couldn't open image", sys.argv[1]
+            print("Couldn't open image", sys.argv[1])
         image = image.astype(np.int16)
         originalSize = image.shape
         image = cv2.copyMakeBorder(
             image, 0, getpadding(image.shape[0]), 0, getpadding(image.shape[1]), cv2.BORDER_REFLECT)
         input_images.append(image)
 
-    output_image = np.zeros_like(input_images[0])
+    output_image = np.zeros_like(input_images[0], dtype=np.uint8)
     nb_images = len(input_images)
 
-    blocks_shape = (image.shape[0] / BLOCK_SIZE, image.shape[1] / BLOCK_SIZE)
+    blocks_shape = (image.shape[0] // BLOCK_SIZE, image.shape[1] // BLOCK_SIZE)
     selected_image = np.zeros(blocks_shape, dtype=np.int32)
     similarity_matrix = np.zeros(
             (blocks_shape[0], blocks_shape[1], nb_images, nb_images), dtype=np.int32)
 
-    print "Compute similarity matrix"
+    print("Compute similarity matrix")
     for blkx in range(blocks_shape[0]):
         for blky in range(blocks_shape[1]):
             blocks = get_all_blocks(input_images, blkx, blky)
             similarity_matrix[blkx, blky, :] = compute_similarity_matrix(blocks)
 
-    print "Find solution"
+    print("Find solution")
     for blkx in range(blocks_shape[0]):
         for blky in range(blocks_shape[1]):
             selected_image[blkx, blky] = np.argmin(np.sum(similarity_matrix[blkx, blky], axis=1))
 
-    print "Generate output image"
+    print("Generate output image")
     for blkx in range(blocks_shape[0]):
         for blky in range(blocks_shape[1]):
             blocks = get_all_blocks(input_images, blkx, blky)
             set_block(output_image, blocks[selected_image[blkx, blky]], blkx, blky)
 
     output_image = output_image[:originalSize[0], :originalSize[1], :]
-    cv2.imwrite("test.jpg", output_image)
+    cv2.namedWindow('test', cv2.WINDOW_NORMAL)
+    cv2.imshow("test", output_image)
+    ret_code = cv2.waitKey(0)
+    print("Press 's' to save image, any other key to exit")
+    if ret_code == 115:  # 's' pressed
+        cv2.imwrite(output_image_name, output_image)
