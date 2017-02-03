@@ -11,26 +11,17 @@ def getpadding(oldSize):
     return BLOCK_SIZE - oldSize % BLOCK_SIZE
 
 
-# return the block (1, j) of image. each block has a size of (BLOCK_SIZE, BLOCK_SIZE)
-def getblock(image, i, j):
-    return image[i * BLOCK_SIZE:(i+1) * BLOCK_SIZE, j * BLOCK_SIZE:(j+1) * BLOCK_SIZE]
-
-
-# return the block (1, j) of image. each block has a size of (BLOCK_SIZE, BLOCK_SIZE)
-def getblock_orig(image, i, j):
+# return the block (i, j) of image. each block has a size of (BLOCK_SIZE, BLOCK_SIZE)
+def get_block(image, i, j):
     return image[i * BLOCK_SIZE:(i+1) * BLOCK_SIZE, j * BLOCK_SIZE:(j+1) * BLOCK_SIZE, :]
 
 
-def setblock(image, block, i, j):
+def set_block(image, block, i, j):
     image[i * BLOCK_SIZE:(i+1) * BLOCK_SIZE, j * BLOCK_SIZE:(j+1) * BLOCK_SIZE, :] = block
 
 
-def get_blocks(images, i, j):
-    return [getblock(image, i, j) for image in images]
-
-
-def get_blocks_orig(images, i, j):
-    return [getblock_orig(image, i, j) for image in images]
+def get_all_blocks(images, i, j):
+    return [get_block(image, i, j) for image in images]
 
 
 def compute_similarity_matrix(blocks):
@@ -54,31 +45,39 @@ if __name__ == "__main__":
 
     print "Loading input images"
     for file_name in input_images_names:
-        image = cv2.imread(file_name, cv2.IMREAD_GRAYSCALE)
-        image_orig = cv2.imread(file_name, cv2.IMREAD_COLOR)
+        image = cv2.imread(file_name, cv2.IMREAD_COLOR)
         if image is None:
             print "Couldn't open image", sys.argv[1]
         image = image.astype(np.int16)
         originalSize = image.shape
         image = cv2.copyMakeBorder(
-            image, 0, getpadding(image.shape[1]), 0, getpadding(image.shape[0]), cv2.BORDER_REFLECT)
-        image_orig = cv2.copyMakeBorder(
-            image_orig, 0, getpadding(image.shape[1]), 0, getpadding(image.shape[0]), cv2.BORDER_REFLECT)
+            image, 0, getpadding(image.shape[0]), 0, getpadding(image.shape[1]), cv2.BORDER_REFLECT)
         input_images.append(image)
-        input_images_orig.append(image_orig)
 
-    output_image = np.zeros_like(image_orig)
+    output_image = np.zeros_like(input_images[0])
+    nb_images = len(input_images)
 
-    selected_image = np.zeros((image.shape[0] / BLOCK_SIZE, image.shape[1] / BLOCK_SIZE), dtype=np.int32)
+    blocks_shape = (image.shape[0] / BLOCK_SIZE, image.shape[1] / BLOCK_SIZE)
+    selected_image = np.zeros(blocks_shape, dtype=np.int32)
+    similarity_matrix = np.zeros(
+            (blocks_shape[0], blocks_shape[1], nb_images, nb_images), dtype=np.int32)
 
-    for blkx in range(selected_image.shape[0]):
-        for blky in range(selected_image.shape[1]):
-            blocks = get_blocks(input_images, blkx, blky)
-            blocks_orig = get_blocks_orig(input_images_orig, blkx, blky)
-            similarity_matrix = compute_similarity_matrix(blocks)
-            selected_image[blkx, blky] = np.argmin(np.sum(similarity_matrix, axis=1))
-            setblock(output_image, blocks_orig[selected_image[blkx, blky]], blkx, blky)
+    print "Compute similarity matrix"
+    for blkx in range(blocks_shape[0]):
+        for blky in range(blocks_shape[1]):
+            blocks = get_all_blocks(input_images, blkx, blky)
+            similarity_matrix[blkx, blky, :] = compute_similarity_matrix(blocks)
 
-    # cv2.imshow("test", output_image)
-    # cv2.waitKey(0)
+    print "Find solution"
+    for blkx in range(blocks_shape[0]):
+        for blky in range(blocks_shape[1]):
+            selected_image[blkx, blky] = np.argmin(np.sum(similarity_matrix[blkx, blky], axis=1))
+
+    print "Generate output image"
+    for blkx in range(blocks_shape[0]):
+        for blky in range(blocks_shape[1]):
+            blocks = get_all_blocks(input_images, blkx, blky)
+            set_block(output_image, blocks[selected_image[blkx, blky]], blkx, blky)
+
+    output_image = output_image[:originalSize[0], :originalSize[1], :]
     cv2.imwrite("test.jpg", output_image)
