@@ -33,12 +33,23 @@ def getpadding(oldSize, block_size):
 class BlockGenerator:
     """This class deal with the retrieval and modification of blocks in the image. It will automatically take into account
     overlap and block size"""
+
     def __init__(self, block_size, overlap):
         self.block_size = block_size
         self.overlap = overlap
 
-    # return the block (i, j) of image. each block has a size of (BLOCK_SIZE, BLOCK_SIZE)
+    def prepare_image(self, image):
+        """add borders to the image so that it can be accessed using the BlockGenerator methods"""
+        image = image.astype(np.int16)
+        return cv2.copyMakeBorder(
+            image,
+            self.overlap, getpadding(image.shape[0], self.block_size) + self.overlap,
+            self.overlap, getpadding(image.shape[1], self.block_size) + self.overlap,
+            cv2.BORDER_CONSTANT, 0)
+
     def get_block(self, image, i, j, extra_border=0):
+        """return the block (i, j) of image. each block has a size of
+        (BLOCK_SIZE + 2 * extra_border, BLOCK_SIZE + 2 * extra_border)"""
         im = image[
             self.overlap - extra_border + i * self.block_size:
                 self.overlap + extra_border + (i+1) * self.block_size,
@@ -90,33 +101,26 @@ def compute_similarity_matrix(blocks):
     return matrix
 
 
-if __name__ == "__main__":
+def main():
     args = parse_arguments()
 
     bg = BlockGenerator(args.block_size, args.overlap)
 
     input_images = []
-    input_images_orig = []
 
     print("Loading input images")
     for file_name in args.images:
         image = cv2.imread(file_name, cv2.IMREAD_COLOR)
         if image is None:
             print("Couldn't open image", sys.argv[1])
-        image = image.astype(np.int16)
         originalSize = image.shape
-        image = cv2.copyMakeBorder(
-            image,
-            args.overlap, getpadding(image.shape[0], args.block_size) + args.overlap,
-            args.overlap, getpadding(image.shape[1], args.block_size) + args.overlap,
-            cv2.BORDER_CONSTANT, 0)
-        input_images.append(image)
+        input_images.append(bg.prepare_image(image))
 
     output_image = np.zeros_like(input_images[0], dtype=np.float32)
 
     nb_images = len(input_images)
 
-    blocks_shape = (image.shape[0] // args.block_size, image.shape[1] // args.block_size)
+    blocks_shape = (input_images[0].shape[0] // args.block_size, input_images[0].shape[1] // args.block_size)
     selected_image = np.zeros(blocks_shape, dtype=np.int32)
     similarity_matrix = np.zeros(
             (blocks_shape[0], blocks_shape[1], nb_images, nb_images), dtype=np.int32)
@@ -154,3 +158,7 @@ if __name__ == "__main__":
     ret_code = cv2.waitKey(0)
     if args.output or ret_code == 115:  # 's' pressed
         cv2.imwrite(args.output or DEFAULT_OUTPUT, output_image)
+
+
+if __name__ == "__main__":
+    main()
