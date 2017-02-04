@@ -31,6 +31,13 @@ def add_block(output, image, i, j, extra_border):
 
 
 def create_stencil(image_shape, smooth):
+    """The stencil is a mask that will enable a smooth transition between blocks. blocks will be multiplied
+    by the stencil so that when they are blitted to the image, transition between them are smoothed out.
+    image 1: 1 1 1 1 1 1 1 , image 2: 2 2 2 2 2 2 2, stencil: .25 .75 1 1 1 .75 .25
+    image 1 * stencil: .25 .75  1   1   1  .75  .25
+                        image 2 * stencil: .5   1.5  2   2   2   1.5 .5
+    adding them:       .25 .75  1   1   1  1.25 1.75 2   2   2   1.5 .5
+    """
     stencil = np.ones(image_shape, dtype=np.float32)
     # 2 * smooth because we need to blend the inside of the block with the outside of the other block
     # for smooth = 4, i1; inside image 1, o1: outside image 1
@@ -120,8 +127,8 @@ if __name__ == "__main__":
             2*SMOOTH_SIZE:originalSize[0]+SMOOTH_SIZE,
             2*SMOOTH_SIZE:originalSize[1]+SMOOTH_SIZE, :].astype(np.uint8)
 
-    cv2.namedWindow('test', cv2.WINDOW_NORMAL)
-    cv2.imshow("test", output_image)
+    cv2.namedWindow('Result', cv2.WINDOW_NORMAL)
+    cv2.imshow("Result", output_image)
     ret_code = cv2.waitKey(0)
     print("Press 's' to save image, any other key to exit")
     if ret_code == 115:  # 's' pressed
