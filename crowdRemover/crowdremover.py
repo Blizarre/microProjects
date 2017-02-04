@@ -1,33 +1,60 @@
 # coding: utf-8
 import numpy as np
+import argparse
 import cv2
 import sys
 
-BLOCK_SIZE = 40
-SMOOTH_SIZE = 2
+DEFAULT_OUTPUT = 'output.jpg'
 
 
-# return the padding needed to be a mutiple of BLOCK_SIZE
-def getpadding(oldSize):
-    return BLOCK_SIZE - oldSize % BLOCK_SIZE
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Remove crowd')
+    parser.add_argument('-b', '--block-size', type=int, default=40,
+                        help='Block size')
+    parser.add_argument('-s', '--overlap', type=int, default=2,
+                        help='overlap between blocks')
+    parser.add_argument('-o', '--output', type=str,
+                        help='Output file name')
+    parser.add_argument('images', type=str, nargs='+',
+                        help='input images')
+    args = parser.parse_args()
+
+    if len(args.images) < 2:
+        parser.error("at least 2 input images are needed")
+
+    return args
 
 
-# return the block (i, j) of image. each block has a size of (BLOCK_SIZE, BLOCK_SIZE)
-def get_block(image, i, j, extra_border=0):
-    im = image[
-        SMOOTH_SIZE - extra_border + i * BLOCK_SIZE:
-            SMOOTH_SIZE + extra_border + (i+1) * BLOCK_SIZE,
-        SMOOTH_SIZE - extra_border + j * BLOCK_SIZE:
-            SMOOTH_SIZE + extra_border + (j+1) * BLOCK_SIZE,
-        :]
-    return im
+def getpadding(oldSize, block_size):
+    """return the padding needed to be a mutiple of BLOCK_SIZE"""
+    return block_size - oldSize % block_size
 
 
-def add_block(output, image, i, j, extra_border):
-    output[
-        SMOOTH_SIZE - extra_border + i * BLOCK_SIZE: (i+1)*BLOCK_SIZE + extra_border + SMOOTH_SIZE,
-        SMOOTH_SIZE - extra_border + j * BLOCK_SIZE: (j+1)*BLOCK_SIZE + extra_border + SMOOTH_SIZE,
-        :] += image
+class BlockGenerator:
+    """This class deal with the retrieval and modification of blocks in the image. It will automatically take into account
+    overlap and block size"""
+    def __init__(self, block_size, overlap):
+        self.block_size = block_size
+        self.overlap = overlap
+
+    # return the block (i, j) of image. each block has a size of (BLOCK_SIZE, BLOCK_SIZE)
+    def get_block(self, image, i, j, extra_border=0):
+        im = image[
+            self.overlap - extra_border + i * self.block_size:
+                self.overlap + extra_border + (i+1) * self.block_size,
+            self.overlap - extra_border + j * self.block_size:
+                self.overlap + extra_border + (j+1) * self.block_size,
+            :]
+        return im
+
+    def add_block(self, output, block, i, j, extra_border):
+        output[
+            self.overlap - extra_border + i * self.block_size: (i+1) * self.block_size + extra_border + self.overlap,
+            self.overlap - extra_border + j * self.block_size: (j+1) * self.block_size + extra_border + self.overlap,
+            :] += block
+
+    def get_all_blocks(self, image_list, i, j):
+        return [self.get_block(image, i, j) for image in image_list]
 
 
 def create_stencil(image_shape, smooth):
@@ -53,10 +80,6 @@ def create_stencil(image_shape, smooth):
     return stencil
 
 
-def get_all_blocks(images, i, j):
-    return [get_block(image, i, j) for image in images]
-
-
 def compute_similarity_matrix(blocks):
     nb_elts = len(blocks)
     matrix = np.zeros((nb_elts, nb_elts))
@@ -68,17 +91,15 @@ def compute_similarity_matrix(blocks):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 4:
-        print("Usage: ", sys.argv[0], "<inputImage> <inputImage> <outputImage>")
-        sys.exit(2)
+    args = parse_arguments()
 
-    input_images_names = sys.argv[1:-2]
-    output_image_name = sys.argv[-1]
+    bg = BlockGenerator(args.block_size, args.overlap)
+
     input_images = []
     input_images_orig = []
 
     print("Loading input images")
-    for file_name in input_images_names:
+    for file_name in args.images:
         image = cv2.imread(file_name, cv2.IMREAD_COLOR)
         if image is None:
             print("Couldn't open image", sys.argv[1])
@@ -86,8 +107,8 @@ if __name__ == "__main__":
         originalSize = image.shape
         image = cv2.copyMakeBorder(
             image,
-            SMOOTH_SIZE, getpadding(image.shape[0]) + SMOOTH_SIZE,
-            SMOOTH_SIZE, getpadding(image.shape[1]) + SMOOTH_SIZE,
+            args.overlap, getpadding(image.shape[0], args.block_size) + args.overlap,
+            args.overlap, getpadding(image.shape[1], args.block_size) + args.overlap,
             cv2.BORDER_CONSTANT, 0)
         input_images.append(image)
 
@@ -95,7 +116,7 @@ if __name__ == "__main__":
 
     nb_images = len(input_images)
 
-    blocks_shape = (image.shape[0] // BLOCK_SIZE, image.shape[1] // BLOCK_SIZE)
+    blocks_shape = (image.shape[0] // args.block_size, image.shape[1] // args.block_size)
     selected_image = np.zeros(blocks_shape, dtype=np.int32)
     similarity_matrix = np.zeros(
             (blocks_shape[0], blocks_shape[1], nb_images, nb_images), dtype=np.int32)
@@ -103,7 +124,7 @@ if __name__ == "__main__":
     print("Compute similarity matrix")
     for blkx in range(blocks_shape[0]):
         for blky in range(blocks_shape[1]):
-            blocks = get_all_blocks(input_images, blkx, blky)
+            blocks = bg.get_all_blocks(input_images, blkx, blky)
             similarity_matrix[blkx, blky, :] = compute_similarity_matrix(blocks)
 
     print("Find solution")
@@ -113,23 +134,23 @@ if __name__ == "__main__":
 
     print("Generate output image")
     stencil = create_stencil(
-        (BLOCK_SIZE + SMOOTH_SIZE * 2, BLOCK_SIZE + SMOOTH_SIZE * 2, 3),
-        SMOOTH_SIZE)
+        (args.block_size + args.overlap * 2, args.block_size + args.overlap * 2, 3),
+        args.overlap)
 
     for blkx in range(blocks_shape[0]):
         for blky in range(blocks_shape[1]):
-            block = get_block(input_images[selected_image[blkx, blky]], blkx, blky, SMOOTH_SIZE)
+            block = bg.get_block(input_images[selected_image[blkx, blky]], blkx, blky, args.overlap)
             block = block.astype(np.float32)
             block *= stencil
-            add_block(output_image, block, blkx, blky, SMOOTH_SIZE)
+            bg.add_block(output_image, block, blkx, blky, args.overlap)
 
     output_image = output_image[
-            2*SMOOTH_SIZE:originalSize[0]+SMOOTH_SIZE,
-            2*SMOOTH_SIZE:originalSize[1]+SMOOTH_SIZE, :].astype(np.uint8)
+            2*args.overlap:originalSize[0]+args.overlap,
+            2*args.overlap:originalSize[1]+args.overlap, :].astype(np.uint8)
 
+    print("Press 's' to save image to file '{}', any other key to exit".format(args.output or DEFAULT_OUTPUT))
     cv2.namedWindow('Result', cv2.WINDOW_NORMAL)
     cv2.imshow("Result", output_image)
     ret_code = cv2.waitKey(0)
-    print("Press 's' to save image, any other key to exit")
-    if ret_code == 115:  # 's' pressed
-        cv2.imwrite(output_image_name, output_image)
+    if args.output or ret_code == 115:  # 's' pressed
+        cv2.imwrite(args.output or DEFAULT_OUTPUT, output_image)
