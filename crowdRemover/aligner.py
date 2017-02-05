@@ -7,6 +7,7 @@ DEFAULT_OUTPUT = 'output.jpg'
 
 
 def update_matrix(orig, second, factor, matrix):
+    """Update the warp matrix "matrix" at scale "factor", return a new warp matrix"""
     orig_gray = cv2.resize(
                            cv2.cvtColor(orig, cv2.COLOR_BGR2GRAY),
                            None, fx=factor, fy=factor, interpolation=cv2.INTER_CUBIC)
@@ -31,9 +32,11 @@ def update_matrix(orig, second, factor, matrix):
 
 
 def align(orig, second):
-    # Convert images to grayscale
+
+    # Initialize warp matrix with identity
     warp_matrix = np.eye(2, 3, dtype=np.float32)
 
+    # Incrementally improve the matrix using finer and finer images
     warp_matrix = update_matrix(orig, second, 0.1, warp_matrix)
     warp_matrix = update_matrix(orig, second, 0.2, warp_matrix)
     warp_matrix = update_matrix(orig, second, 0.5, warp_matrix)
