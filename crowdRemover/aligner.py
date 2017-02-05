@@ -16,7 +16,7 @@ def update_matrix(orig, second, factor, matrix):
                              None, fx=factor, fy=factor, interpolation=cv2.INTER_CUBIC)
     print("images ready factor{}: {}".format(factor, orig_gray.shape))
 
-    warp_mode = cv2.MOTION_AFFINE
+    warp_mode = cv2.MOTION_HOMOGRAPHY
     number_of_iterations = 500
 
     # Specify the threshold of the increment
@@ -34,7 +34,7 @@ def update_matrix(orig, second, factor, matrix):
 def align(orig, second):
 
     # Initialize warp matrix with identity
-    warp_matrix = np.eye(2, 3, dtype=np.float32)
+    warp_matrix = np.eye(3, 3, dtype=np.float32)
 
     # Incrementally improve the matrix using finer and finer images
     warp_matrix = update_matrix(orig, second, 0.1, warp_matrix)
@@ -43,7 +43,7 @@ def align(orig, second):
     warp_matrix = update_matrix(orig, second, 1.0, warp_matrix)
 
     # Use warpAffine for Translation, Euclidean and Affine
-    return cv2.warpAffine(
+    return cv2.warpPerspective(
                           second,
                           warp_matrix,
                           (orig.shape[1], orig.shape[0]),
