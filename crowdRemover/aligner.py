@@ -8,6 +8,9 @@ DEFAULT_OUTPUT = 'output.jpg'
 
 def update_matrix(orig, second, factor, matrix):
     """Update the warp matrix "matrix" at scale "factor", return a new warp matrix"""
+
+    reprojThresh = 4.0
+
     orig_gray = cv2.resize(
                            cv2.cvtColor(orig, cv2.COLOR_BGR2GRAY),
                            None, fx=factor, fy=factor, interpolation=cv2.INTER_CUBIC)
@@ -16,19 +19,41 @@ def update_matrix(orig, second, factor, matrix):
                              None, fx=factor, fy=factor, interpolation=cv2.INTER_CUBIC)
     print("images ready factor{}: {}".format(factor, orig_gray.shape))
 
-    warp_mode = cv2.MOTION_HOMOGRAPHY
-    number_of_iterations = 500
+    print("compute descriptors")
+    descriptor = cv2.xfeatures2d.SIFT_create()
+    (kpsOrig, featuresOrig) = descriptor.detectAndCompute(orig_gray, None)
 
-    # Specify the threshold of the increment
-    # in the correlation coefficient between two iterations
-    termination_eps = 1e-5
+    (kpsSecond, featuresSecond) = descriptor.detectAndCompute(second_gray, None)
 
-    # Define termination criteria
-    criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, number_of_iterations,  termination_eps)
+    kpsOrig = np.float32([kp.pt for kp in kpsOrig])
+    kpsSecond = np.float32([kp.pt for kp in kpsSecond])
+    print("Descriptors found for orig: {}, second:{}".format(len(kpsOrig), len(kpsSecond)))
 
-    # Run the ECC algorithm. The results are stored in warp_matrix.
-    (cc, warp_matrix) = cv2.findTransformECC(orig_gray, second_gray, matrix, warp_mode, criteria)
-    return warp_matrix
+    print("match descriptors")
+    matcher = cv2.DescriptorMatcher_create("BruteForce")
+    rawMatches = matcher.knnMatch(featuresOrig, featuresSecond, 2)
+
+    print("found {} raw matches", len(rawMatches))
+
+    ratio = 0.5
+    matches = []
+    # loop over the raw matches
+    for m in rawMatches:
+        # ensure the distance is within a certain ratio of each
+        # other (i.e. Lowe's ratio test)
+        if len(m) == 2 and m[0].distance < m[1].distance * ratio:
+            matches.append((m[0].trainIdx, m[0].queryIdx))
+
+    print("found {} filtered (lowe's) matches".format(len(matches)))
+
+    # matches = rawMatches
+    ptsOrig = np.float32([kpsOrig[i] for (_, i) in matches])
+    ptsSeccond = np.float32([kpsSecond[i] for (i, _) in matches])
+
+    print("find homography")
+    (H, status) = cv2.findHomography(ptsOrig, ptsSeccond, cv2.RANSAC,
+                                     reprojThresh)
+    return H
 
 
 def align(orig, second):
@@ -37,9 +62,6 @@ def align(orig, second):
     warp_matrix = np.eye(3, 3, dtype=np.float32)
 
     # Incrementally improve the matrix using finer and finer images
-    warp_matrix = update_matrix(orig, second, 0.1, warp_matrix)
-    warp_matrix = update_matrix(orig, second, 0.2, warp_matrix)
-    warp_matrix = update_matrix(orig, second, 0.5, warp_matrix)
     warp_matrix = update_matrix(orig, second, 1.0, warp_matrix)
 
     # Use warpAffine for Translation, Euclidean and Affine
