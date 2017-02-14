@@ -9,12 +9,12 @@ DEFAULT_OUTPUT = 'output.jpg'
 def update_matrix(orig, second, factor, matrix):
     """Update the warp matrix "matrix" at scale "factor", return a new warp matrix"""
     orig_gray = cv2.resize(
-                           cv2.cvtColor(orig, cv2.COLOR_BGR2GRAY),
+                           orig,
                            None, fx=factor, fy=factor, interpolation=cv2.INTER_CUBIC)
     second_gray = cv2.resize(
-                             cv2.cvtColor(second, cv2.COLOR_BGR2GRAY),
+                             second,
                              None, fx=factor, fy=factor, interpolation=cv2.INTER_CUBIC)
-    print("images ready factor{}: {}".format(factor, orig_gray.shape))
+    print("images ready (factor {}): {}".format(factor, orig_gray.shape))
 
     warp_mode = cv2.MOTION_HOMOGRAPHY
     number_of_iterations = 500
@@ -31,27 +31,28 @@ def update_matrix(orig, second, factor, matrix):
     return warp_matrix
 
 
-def align(orig, second):
+def align(orig, second, to_warp):
 
     # Initialize warp matrix with identity
     warp_matrix = np.eye(3, 3, dtype=np.float32)
 
     # Incrementally improve the matrix using finer and finer images
+    warp_matrix = update_matrix(orig, second, 0.05, warp_matrix)
     warp_matrix = update_matrix(orig, second, 0.1, warp_matrix)
     warp_matrix = update_matrix(orig, second, 0.2, warp_matrix)
     warp_matrix = update_matrix(orig, second, 0.5, warp_matrix)
     warp_matrix = update_matrix(orig, second, 1.0, warp_matrix)
 
-    # Use warpAffine for Translation, Euclidean and Affine
     return cv2.warpPerspective(
-                          second,
+                          to_warp,
                           warp_matrix,
                           (orig.shape[1], orig.shape[0]),
                           flags=cv2.INTER_CUBIC + cv2.WARP_INVERSE_MAP)
 
 
-reference = cv2.imread(sys.argv[1])
-candidate = cv2.imread(sys.argv[2])
+reference = cv2.imread(sys.argv[1], cv2.IMREAD_GRAYSCALE)
+candidate = cv2.imread(sys.argv[2], cv2.IMREAD_GRAYSCALE)
+to_warp = cv2.imread(sys.argv[2])
 
-aligned = align(reference, candidate)
+aligned = align(reference, candidate, to_warp)
 cv2.imwrite(sys.argv[3], aligned)
