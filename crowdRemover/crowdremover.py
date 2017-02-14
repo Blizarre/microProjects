@@ -97,7 +97,7 @@ def compute_similarity_matrix(blocks):
     for i in range(nb_elts):
         for j in range(nb_elts):
             diff = blocks[i] - blocks[j]
-            matrix[i, j] = np.sum(diff * diff)
+            matrix[i, j] = np.sum(np.abs(diff))
     return matrix
 
 
@@ -129,6 +129,7 @@ def main():
     for blkx in range(blocks_shape[0]):
         for blky in range(blocks_shape[1]):
             blocks = bg.get_all_blocks(input_images, blkx, blky)
+            blocks = [cv2.cvtColor(b.astype(np.float32) / 255, cv2.COLOR_RGB2LAB) for b in blocks]
             similarity_matrix[blkx, blky, :] = compute_similarity_matrix(blocks)
 
     print("Find solution")
