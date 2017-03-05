@@ -3,8 +3,6 @@ import cv2
 import sys
 import numpy as np
 
-DEFAULT_OUTPUT = 'output.jpg'
-
 
 def update_matrix(orig, second, factor, matrix):
     """Update the warp matrix "matrix" at scale "factor", return a new warp matrix"""
@@ -14,7 +12,6 @@ def update_matrix(orig, second, factor, matrix):
     second_gray = cv2.resize(
                              second,
                              None, fx=factor, fy=factor, interpolation=cv2.INTER_CUBIC)
-    print("images ready (factor {}): {}".format(factor, orig_gray.shape))
 
     warp_mode = cv2.MOTION_HOMOGRAPHY
     number_of_iterations = 500
@@ -50,9 +47,28 @@ def align(orig, second, to_warp):
                           flags=cv2.INTER_CUBIC + cv2.WARP_INVERSE_MAP)
 
 
-reference = cv2.imread(sys.argv[1], cv2.IMREAD_GRAYSCALE)
-candidate = cv2.imread(sys.argv[2], cv2.IMREAD_GRAYSCALE)
-to_warp = cv2.imread(sys.argv[2])
+def open_file(file_name, isGray=False):
+    if isGray:
+        flags = cv2.IMREAD_GRAYSCALE
+    else:
+        flags = cv2.IMREAD_COLOR
 
-aligned = align(reference, candidate, to_warp)
-cv2.imwrite(sys.argv[3], aligned)
+    image = cv2.imread(file_name, flags)
+    if image is None:
+        raise Exception("File {} cannot be opened".format(file_name))
+    return image
+
+
+if __name__ == "__main__":
+    try:
+        reference_name, candidate_name, aligned_name = sys.argv[1:]
+    except:
+        print("Usage: {} <reference file> <candidate file> <candidate aligned result>".format(sys.argv[0]))
+        sys.exit(1)
+
+    reference = open_file(reference_name, True)
+    candidate = open_file(candidate_name, True)
+    to_warp = open_file(candidate_name)
+
+    aligned = align(reference, candidate, to_warp)
+    cv2.imwrite(aligned_name, aligned)
