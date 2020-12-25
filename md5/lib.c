@@ -7,10 +7,10 @@
 
 void State_init(State *s)
 {
-  s->A = 0x01234567;
-  s->B = 0x89abcdef;
-  s->C = 0xfedcba98;
-  s->D = 0x76543210;
+  s->A = 0x67452301; // little endian for 0x01234567;
+  s->B = 0xefcdab89; // 0x89abcdef
+  s->C = 0x98badcfe; // 0xfedcba98
+  s->D = 0x10325476; // 0x76543210
 }
 
 uint32_t F(uint32_t X, uint32_t Y, uint32_t Z)
@@ -33,6 +33,7 @@ uint32_t I(uint32_t X, uint32_t Y, uint32_t Z)
   return Y ^ (X | ~Z);
 }
 
+// Taken directly from the RFC reference implementation
 uint32_t T[64] = {
     0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
     0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be, 0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
@@ -83,87 +84,76 @@ void md5_round4(Source *source, uint32_t *a, uint32_t *b, uint32_t *c, uint32_t 
 }
 
 int params_round1[4][4][3] = {
-     {{ 0,  7,  1},  { 1, 12,  2},  {2, 17,  3}, {3, 22,  4}},
-     {{ 4,  7,  5},  { 5, 12,  6},  {6, 17,  7}, {7, 22,  8}},
-     {{ 8,  7,  9},  { 9, 12, 10},  {10, 17, 11}, {11, 22, 12}},
-     {{12,  7, 13},  {13, 12, 14},  {14, 17, 15}, {15, 22, 16}}
+     {{ 0,  7,  0},  { 1, 12,  1},  {2, 17,  2}, {3, 22,  3}},
+     {{ 4,  7,  4},  { 5, 12,  5},  {6, 17,  6}, {7, 22,  7}},
+     {{ 8,  7,  8},  { 9, 12,  9},  {10, 17, 10}, {11, 22, 11}},
+     {{12,  7, 12},  {13, 12, 13},  {14, 17, 14}, {15, 22, 15}}
 };
 
 int params_round2[4][4][3] = {
-     {{ 1, 5, 17},  {  6,  9, 18},  { 11, 14, 19},  {  0, 20, 20}},
-     {{ 5, 5, 21},  { 10,  9, 22},  { 15, 14, 23},  {  4, 20, 24}},
-     {{ 9, 5, 25},  { 14,  9, 26},  {  3, 14, 27},  {  8, 20, 28}},
-     {{13, 5, 29},  {  2,  9, 30},  {  7, 14, 31},  { 12, 20, 32}}
+     {{ 1, 5, 16},  {  6,  9, 17},  { 11, 14, 18},  {  0, 20, 19}},
+     {{ 5, 5, 20},  { 10,  9, 21},  { 15, 14, 22},  {  4, 20, 23}},
+     {{ 9, 5, 24},  { 14,  9, 25},  {  3, 14, 26},  {  8, 20, 27}},
+     {{13, 5, 28},  {  2,  9, 29},  {  7, 14, 30},  { 12, 20, 31}}
 };
 
 int params_round3[4][4][3] = {
-     {{  5,  4, 33},  {  8, 11, 34},  { 11, 16, 35},  { 14, 23, 36}},
-     {{  1,  4, 37},  {  4, 11, 38},  {  7, 16, 39},  { 10, 23, 40}},
-     {{ 13,  4, 41},  {  0, 11, 42},  {  3, 16, 43},  {  6, 23, 44}},
-     {{  9,  4, 45},  { 12, 11, 46},  { 15, 16, 47},  {  2, 23, 48}}
+     {{  5,  4, 32},  {  8, 11, 33},  { 11, 16, 34},  { 14, 23, 35}},
+     {{  1,  4, 36},  {  4, 11, 37},  {  7, 16, 38},  { 10, 23, 39}},
+     {{ 13,  4, 40},  {  0, 11, 41},  {  3, 16, 42},  {  6, 23, 43}},
+     {{  9,  4, 44},  { 12, 11, 45},  { 15, 16, 46},  {  2, 23, 47}}
 };
 
 int params_round4[4][4][3] = {
-     {{  0,  6, 49},  {  7, 10, 50},  { 14, 15, 51},  {  5, 21, 52}},
-     {{ 12,  6, 53},  {  3, 10, 54},  { 10, 15, 55},  {  1, 21, 56}},
-     {{  8,  6, 57},  { 15, 10, 58},  {  6, 15, 59},  { 13, 21, 60}},
-     {{  4,  6, 61},  { 11, 10, 62},  {  2, 15, 63},  {  9, 21, 64}}
+     {{  0,  6, 48},  {  7, 10, 49},  { 14, 15, 50},  {  5, 21, 51}},
+     {{ 12,  6, 52},  {  3, 10, 53},  { 10, 15, 54},  {  1, 21, 55}},
+     {{  8,  6, 56},  { 15, 10, 57},  {  6, 15, 58},  { 13, 21, 59}},
+     {{  4,  6, 60},  { 11, 10, 61},  {  2, 15, 62},  {  9, 21, 63}}
 };
 
-#define ROUND(X, A, B, C, D) (md5_round##X(source, &state->A, &state->B, &state->C, &state->D, \
-        params_round##X[i][j][0], params_round##X[i][j][1], params_round##X[i][j][2]))
+#define ROUND(X, col, A, B, C, D) (md5_round##X(source, &state->A, &state->B, &state->C, &state->D, \
+        params_round##X[row][col][0], params_round##X[row][col][1], params_round##X[row][col][2]))
 
 void State_iterate(State *state, Source *source)
 {
   State previous = *state;
-  int i, j;
+  int row;
 
   // Round 1
-  for (i = 0; i < 4; i++)
+  for (row = 0; row < 4; row++)
   {
-    for (j = 0; j < 4; j++) { ROUND(1, A, B, C, D); }
-
-    for (j = 0; j < 4; j++) { ROUND(1, D, A, B, C); }
-
-    for (j = 0; j < 4; j++) { ROUND(1, C, D, A, B); }
-
-    for (j = 0; j < 4; j++) { ROUND(1, B, C, D, A); }
+    ROUND(1, 0, A, B, C, D);
+//    printf("%d A=%u B=%u C=%u D=%u\n", iter++, state->A, state->B, state->C, state->D);
+    ROUND(1, 1, D, A, B, C);
+    ROUND(1, 2, C, D, A, B);
+    ROUND(1, 3, B, C, D, A);
   }
 
   // Round 2
-  for (i = 0; i < 4; i++)
+  for (row = 0; row < 4; row++)
   {
-    for (j = 0; j < 4; j++) { ROUND(2, A, B, C, D); }
-
-    for (j = 0; j < 4; j++) { ROUND(2, D, A, B, C); }
-
-    for (j = 0; j < 4; j++) { ROUND(2, C, D, A, B); }
-
-    for (j = 0; j < 4; j++) { ROUND(2, B, C, D, A); }
+    ROUND(2, 0, A, B, C, D);
+    ROUND(2, 1, D, A, B, C);
+    ROUND(2, 2, C, D, A, B);
+    ROUND(2, 3, B, C, D, A);
   }
 
   // Round 3
-  for (i = 0; i < 4; i++)
+  for (row = 0; row < 4; row++)
   {
-    for (j = 0; j < 4; j++) { ROUND(3, A, B, C, D); }
-
-    for (j = 0; j < 4; j++) { ROUND(3, D, A, B, C); }
-
-    for (j = 0; j < 4; j++) { ROUND(3, C, D, A, B); }
-
-    for (j = 0; j < 4; j++) { ROUND(3, B, C, D, A); }
+    ROUND(3, 0, A, B, C, D);
+    ROUND(3, 1, D, A, B, C);
+    ROUND(3, 2, C, D, A, B);
+    ROUND(3, 3, B, C, D, A);
   }
 
   // Round 4
-  for (i = 0; i < 4; i++)
+  for (row = 0; row < 4; row++)
   {
-    for (j = 0; j < 4; j++) { ROUND(4, A, B, C, D); }
-
-    for (j = 0; j < 4; j++) { ROUND(4, D, A, B, C); }
-
-    for (j = 0; j < 4; j++) { ROUND(4, C, D, A, B); }
-
-    for (j = 0; j < 4; j++) { ROUND(4, B, C, D, A); }
+    ROUND(4, 0, A, B, C, D);
+    ROUND(4, 1, D, A, B, C);
+    ROUND(4, 2, C, D, A, B);
+    ROUND(4, 3, B, C, D, A);
   }
 
   state->A += previous.A;
@@ -180,7 +170,7 @@ int md5(FILE *fd, char output[32])
 
 void append_size(Source *s)
 {
-  ((uint64_t *)s->data)[CHUNK_SIZE_U64 - 1] = s->size;
+  ((uint64_t *)s->data)[CHUNK_SIZE_U64 - 1] = s->size * 8; // We write the number of bits
 }
 
 Source_Status Source_read(FILE *fd, Source *s)
@@ -232,6 +222,16 @@ Source_Status Source_read(FILE *fd, Source *s)
   return s->status;
 }
 
+void sprintf_u32_le(uint32_t number, char* md5) {
+  int i;
+  for(i=0; i<sizeof(uint32_t); i++) {
+    snprintf(md5 + 2 * i, 3, "%02x", (number >> 8*i) & 0xff);
+  }
+}
+
 void State_to_md5(State* state, char* md5) {
-  snprintf(md5, 33, "%08x%08x%08x%08x", state->A, state->B, state->C, state->D);
+  sprintf_u32_le(state->A, md5);
+  sprintf_u32_le(state->B, md5 + 2 * 1 * sizeof(uint32_t)); // 2 char for each byte x 1 x 4 bytes for a single uint32
+  sprintf_u32_le(state->C, md5 + 2 * 2 * sizeof(uint32_t)); // 2 char for each byte x 2 x 4 bytes
+  sprintf_u32_le(state->D, md5 + 2 * 3 * sizeof(uint32_t)); // 2 char for each byte x 3 x 4 bytes
 }
