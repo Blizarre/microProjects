@@ -2,7 +2,6 @@
 
 int main(int argc, char **argv)
 {
-  printf("Number of files: %d\n", argc - 1);
   Source s;
   State state;
   for (int i = 1; i < argc; i++)
@@ -18,11 +17,14 @@ int main(int argc, char **argv)
     State_init(&state);
     while (Source_continue(&s))
     {
-      printf("Chunk: %d", s.status);
       Source_read(fd, &s);
       State_init(&state);
       State_iterate(&state, &s);
     }
+    char md5[33];
+    State_to_md5(&state, md5);
+    printf("%s  %s\n", md5, argv[i]);
+
   }
   return 0;
 }

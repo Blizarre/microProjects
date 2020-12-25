@@ -1,12 +1,14 @@
-HEADERS: *.h
-CFLAGS += -pedantic -ggdb -O0
-
-.PHONY: clean test
+HEADERS = *.h
+CFLAGS += -pedantic -Wall -Werror
+CFLAGS += -ggdb -O0
+#CFLAGS += -O3 -DNDEBUG
 
 ALL: md5
 
+.PHONY: clean test
+
 %.o: %.c $(HEADERS)
-	$(CC) -c -o $@ $^ $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 testtool: testtool.o lib.o
 	$(CC) -o $@ $^ $(LDFLAGS)

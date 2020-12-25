@@ -53,14 +53,123 @@ int Source_continue(Source *s)
   return s->status != DONE && s->status != ERROR;
 }
 
-void md5_round(Source *source, State *state, uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d, int k, int s, int i)
+// Proper way to rotate left, which compile to a single instruction
+// https://blog.regehr.org/archives/1063
+uint32_t rotl32a (uint32_t x, uint32_t n)
 {
-  *a = *b + ((*a + F(*b, *c, *d) + source->data[k] + T[i]) << s);
+  assert(n<32);
+  assert(n!=0);
+  return (x<<n) | (x>>(32-n));
 }
+
+void md5_round1(Source *source, uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d, int k, int s, int i)
+{
+  *a = *b + (rotl32a(*a + F(*b, *c, *d) + source->data[k] + T[i], s));
+}
+
+void md5_round2(Source *source, uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d, int k, int s, int i)
+{
+  *a = *b + (rotl32a(*a + G(*b, *c, *d) + source->data[k] + T[i], s));
+}
+
+void md5_round3(Source *source, uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d, int k, int s, int i)
+{
+  *a = *b + (rotl32a(*a + H(*b, *c, *d) + source->data[k] + T[i], s));
+}
+
+void md5_round4(Source *source, uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d, int k, int s, int i)
+{
+  *a = *b + (rotl32a(*a + I(*b, *c, *d) + source->data[k] + T[i], s));
+}
+
+int params_round1[4][4][3] = {
+     {{ 0,  7,  1},  { 1, 12,  2},  {2, 17,  3}, {3, 22,  4}},
+     {{ 4,  7,  5},  { 5, 12,  6},  {6, 17,  7}, {7, 22,  8}},
+     {{ 8,  7,  9},  { 9, 12, 10},  {10, 17, 11}, {11, 22, 12}},
+     {{12,  7, 13},  {13, 12, 14},  {14, 17, 15}, {15, 22, 16}}
+};
+
+int params_round2[4][4][3] = {
+     {{ 1, 5, 17},  {  6,  9, 18},  { 11, 14, 19},  {  0, 20, 20}},
+     {{ 5, 5, 21},  { 10,  9, 22},  { 15, 14, 23},  {  4, 20, 24}},
+     {{ 9, 5, 25},  { 14,  9, 26},  {  3, 14, 27},  {  8, 20, 28}},
+     {{13, 5, 29},  {  2,  9, 30},  {  7, 14, 31},  { 12, 20, 32}}
+};
+
+int params_round3[4][4][3] = {
+     {{  5,  4, 33},  {  8, 11, 34},  { 11, 16, 35},  { 14, 23, 36}},
+     {{  1,  4, 37},  {  4, 11, 38},  {  7, 16, 39},  { 10, 23, 40}},
+     {{ 13,  4, 41},  {  0, 11, 42},  {  3, 16, 43},  {  6, 23, 44}},
+     {{  9,  4, 45},  { 12, 11, 46},  { 15, 16, 47},  {  2, 23, 48}}
+};
+
+int params_round4[4][4][3] = {
+     {{  0,  6, 49},  {  7, 10, 50},  { 14, 15, 51},  {  5, 21, 52}},
+     {{ 12,  6, 53},  {  3, 10, 54},  { 10, 15, 55},  {  1, 21, 56}},
+     {{  8,  6, 57},  { 15, 10, 58},  {  6, 15, 59},  { 13, 21, 60}},
+     {{  4,  6, 61},  { 11, 10, 62},  {  2, 15, 63},  {  9, 21, 64}}
+};
+
+#define ROUND(X, A, B, C, D) (md5_round##X(source, &state->A, &state->B, &state->C, &state->D, \
+        params_round##X[i][j][0], params_round##X[i][j][1], params_round##X[i][j][2]))
 
 void State_iterate(State *state, Source *source)
 {
-  //State previous = *s;
+  State previous = *state;
+  int i, j;
+
+  // Round 1
+  for (i = 0; i < 4; i++)
+  {
+    for (j = 0; j < 4; j++) { ROUND(1, A, B, C, D); }
+
+    for (j = 0; j < 4; j++) { ROUND(1, D, A, B, C); }
+
+    for (j = 0; j < 4; j++) { ROUND(1, C, D, A, B); }
+
+    for (j = 0; j < 4; j++) { ROUND(1, B, C, D, A); }
+  }
+
+  // Round 2
+  for (i = 0; i < 4; i++)
+  {
+    for (j = 0; j < 4; j++) { ROUND(2, A, B, C, D); }
+
+    for (j = 0; j < 4; j++) { ROUND(2, D, A, B, C); }
+
+    for (j = 0; j < 4; j++) { ROUND(2, C, D, A, B); }
+
+    for (j = 0; j < 4; j++) { ROUND(2, B, C, D, A); }
+  }
+
+  // Round 3
+  for (i = 0; i < 4; i++)
+  {
+    for (j = 0; j < 4; j++) { ROUND(3, A, B, C, D); }
+
+    for (j = 0; j < 4; j++) { ROUND(3, D, A, B, C); }
+
+    for (j = 0; j < 4; j++) { ROUND(3, C, D, A, B); }
+
+    for (j = 0; j < 4; j++) { ROUND(3, B, C, D, A); }
+  }
+
+  // Round 4
+  for (i = 0; i < 4; i++)
+  {
+    for (j = 0; j < 4; j++) { ROUND(4, A, B, C, D); }
+
+    for (j = 0; j < 4; j++) { ROUND(4, D, A, B, C); }
+
+    for (j = 0; j < 4; j++) { ROUND(4, C, D, A, B); }
+
+    for (j = 0; j < 4; j++) { ROUND(4, B, C, D, A); }
+  }
+
+  state->A += previous.A;
+  state->B += previous.B;
+  state->C += previous.C;
+  state->D += previous.D;
 }
 
 int md5(FILE *fd, char output[32])
@@ -121,4 +230,8 @@ Source_Status Source_read(FILE *fd, Source *s)
   ((unsigned char *)s->data)[sz_read] = BYTE_10000000;
   s->status = PADDING_CHUNK;
   return s->status;
+}
+
+void State_to_md5(State* state, char* md5) {
+  snprintf(md5, 33, "%08x%08x%08x%08x", state->A, state->B, state->C, state->D);
 }

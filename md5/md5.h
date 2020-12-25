@@ -41,3 +41,4 @@ void Source_init(Source* s);
 int Source_continue(Source* s);
 Source_Status Source_read(FILE* fd, Source* s);
 void State_iterate(State * state, Source * source);
+void State_to_md5(State*, char*);
