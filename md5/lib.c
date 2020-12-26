@@ -162,12 +162,6 @@ void State_iterate(State *state, Source *source)
   state->D += previous.D;
 }
 
-int md5(FILE *fd, char output[32])
-{
-  memset(output, 0, 32);
-  return 1;
-}
-
 void append_size(Source *s)
 {
   ((uint64_t *)s->data)[CHUNK_SIZE_U64 - 1] = s->size * 8; // We write the number of bits
@@ -216,22 +210,44 @@ Source_Status Source_read(FILE *fd, Source *s)
 
   // We read too much: We will need to zero the remaining data,
   // set the padding bits, and write the size on the next chunk
-  memset(s->data + sz_read, 0, CHUNK_SIZE - sz_read);
+  memset((unsigned char *)s->data + sz_read, 0, CHUNK_SIZE - sz_read);
   ((unsigned char *)s->data)[sz_read] = BYTE_10000000;
   s->status = PADDING_CHUNK;
   return s->status;
 }
 
-void sprintf_u32_le(uint32_t number, char* md5) {
+void sprintf_u32_le(uint32_t number, char* hash) {
   int i;
   for(i=0; i<sizeof(uint32_t); i++) {
-    snprintf(md5 + 2 * i, 3, "%02x", (number >> 8*i) & 0xff);
+    snprintf(hash + 2 * i, 3, "%02x", (number >> 8*i) & 0xff);
   }
 }
 
-void State_to_md5(State* state, char* md5) {
-  sprintf_u32_le(state->A, md5);
-  sprintf_u32_le(state->B, md5 + 2 * 1 * sizeof(uint32_t)); // 2 char for each byte x 1 x 4 bytes for a single uint32
-  sprintf_u32_le(state->C, md5 + 2 * 2 * sizeof(uint32_t)); // 2 char for each byte x 2 x 4 bytes
-  sprintf_u32_le(state->D, md5 + 2 * 3 * sizeof(uint32_t)); // 2 char for each byte x 3 x 4 bytes
+void State_to_hash(State* state, char* hash) {
+  sprintf_u32_le(state->A, hash);
+  sprintf_u32_le(state->B, hash + 2 * 1 * sizeof(uint32_t)); // 2 char for each byte x 1 x 4 bytes for a single uint32
+  sprintf_u32_le(state->C, hash + 2 * 2 * sizeof(uint32_t)); // 2 char for each byte x 2 x 4 bytes
+  sprintf_u32_le(state->D, hash + 2 * 3 * sizeof(uint32_t)); // 2 char for each byte x 3 x 4 bytes
+}
+
+// Check for either the ERROR or DONE value. TODO: Make the interface less tied to the internals
+Source_Status md5(char* hash, FILE* fd) {
+  Source source;
+  State state;
+  Source_Status status;
+
+  Source_init(&source);
+
+  State_init(&state);
+  while (Source_continue(&source))
+  {
+    status = Source_read(fd, &source);
+    if(status == ERROR) {
+      return status;
+    }
+    State_init(&state);
+    State_iterate(&state, &source);
+  }
+  State_to_hash(&state, hash);
+  return DONE;
 }

@@ -35,10 +35,12 @@ uint32_t C;
 uint32_t D;
 } State;
 
-void State_init(State *s);
+// High-level API
+Source_Status md5(char* hash, FILE* fd);
 
+void State_init(State *s);
 void Source_init(Source* s);
 int Source_continue(Source* s);
 Source_Status Source_read(FILE* fd, Source* s);
 void State_iterate(State * state, Source * source);
-void State_to_md5(State*, char*);
+void State_to_hash(State*, char*);
