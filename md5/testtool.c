@@ -18,6 +18,39 @@ FILE* create_test_file(char* data, size_t size) {
   return test;
 }
 
+// debug data: same output format as https://cse.unl.edu/~ssamal/crypto/genhash.php
+void display_data(Source* source) {
+  int i;
+  for(i=0; i<16;i++) {
+    printf("[%d] %u\n", i, source->data[i]);
+  }
+}
+
+
+int testZeroLengthData() {
+  //. Simple case: no data.
+  char* data = "";
+  FILE* fd = create_test_file(data, 0);
+
+  Source s;
+  Source_init(&s);
+  assert(Source_continue(&s));
+  Source_read(fd, &s);
+  assert(!Source_continue(&s));
+  assert(s.size == 0);
+  assert(((unsigned char*)s.data)[0] == BYTE_10000000);
+  State state;
+  State_init(&state);
+  State_iterate(&state, &s);
+  char hash[32];
+  State_to_hash(&state, &hash[0]);
+  assert(strcmp(hash, "d41d8cd98f00b204e9800998ecf8427e") == 0);
+
+  fclose(fd);
+  printf("[testZeroLengthData] OK\n");
+  return 1;
+}
+
 
 int testSingleBlockCase() {
   //. Simple case: data is much smaller than 512 bits.
@@ -39,7 +72,41 @@ int testSingleBlockCase() {
   State_to_hash(&state, &hash[0]);
   assert(strcmp(hash, "b10a8db164e0754105b7a99be72e3fe5") == 0);
 
+  fclose(fd);
   printf("[testSingleBlockCase] OK\n");
+  return 1;
+}
+
+
+int test56CharCase() {
+  //. Two block case: data is one byte too large
+  char* data = "33333333333333333333333333333333333333333333333333333333";
+  FILE* fd = create_test_file(data, 56);
+
+  Source s;
+  State state;
+
+  State_init(&state);
+  Source_init(&s);
+  assert(Source_continue(&s));
+
+  Source_read(fd, &s);
+  assert(s.size == 56);
+  State_iterate(&state, &s);
+  assert(Source_continue(&s));
+  assert(((unsigned char*)s.data)[56] == BYTE_10000000);
+
+  Source_read(fd, &s);
+  assert(s.size == 56);
+  State_iterate(&state, &s);
+  assert(!Source_continue(&s));
+
+  char hash[32];
+  State_to_hash(&state, &hash[0]);
+  assert(strcmp(hash, "c78c9691eb9c21200f66024da3232619") == 0);
+
+  fclose(fd);
+  printf("[test56CharCase] OK\n");
   return 1;
 }
 
@@ -107,16 +174,9 @@ int testSingleBlockExtraPaddingCase() {
   State_to_hash(&state, &hash[0]);
   assert(strcmp(hash, "ad76b175d22a98a4e3bc2ad72affc53e") == 0);
 
+  fclose(fd);
   printf("[testSingleBlockExtraPaddingCase] OK\n");
   return 1;
-}
-
-// debug data: same output format as https://cse.unl.edu/~ssamal/crypto/genhash.php
-void display_data(Source* source) {
-  int i;
-  for(i=0; i<16;i++) {
-    printf("[%d] %u\n", i, source->data[i]);
-  }
 }
 
 int test2BlocksExtraPaddingCase() {
@@ -154,8 +214,36 @@ int test2BlocksExtraPaddingCase() {
   State_to_hash(&state, &hash[0]);
   assert(strcmp(hash, "c7ef963feba90638da5661d7c73cb1ad") == 0);
 
+  fclose(fd);
   printf("[test2BlocksExtraPaddingCase] OK\n");
   return 1;
+}
+
+void testFullDataset() {
+  FILE* fd = fopen("test.data", "r");
+  char expected[32 + 1], generated[32 + 1], data[512]; // NULL char ending
+  expected[32] = 0; // null-terminated string
+  int size;
+
+  while(1) {
+    fread(expected, 32, 1, fd);
+    assert(!ferror(fd));
+    if(feof(fd)) {
+      printf("\n[testFullDataset] OK\n");
+      fclose(fd);
+      return;
+    }
+
+    fread(&size, 4, 1, fd);
+    fread(data, size, 1, fd);
+
+    FILE* fd_MD5 = create_test_file(data, size);
+    md5(generated, fd_MD5);
+    fclose(fd_MD5);
+    printf(".");
+    fflush(stdout);
+    assert(strcmp(generated, expected) == 0);
+  }
 }
 
 int main() {
@@ -163,6 +251,8 @@ int main() {
   testTwoBlockCase();
   testSingleBlockExtraPaddingCase();
   test2BlocksExtraPaddingCase();
-//  testZeroLength();
+  test56CharCase();
+  testZeroLengthData();
+  testFullDataset();
   printf("All tests ok");
 }
