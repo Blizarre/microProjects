@@ -240,7 +240,6 @@ Source_Status md5(char* hash, FILE* fd) {
     if(status == ERROR) {
       return status;
     }
-    State_init(&state);
     State_iterate(&state, &source);
   }
   State_to_hash(&state, hash);
