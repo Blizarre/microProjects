@@ -71,6 +71,7 @@ int testTwoBlockCase() {
   State_to_hash(&state, &hash[0]);
   assert(strcmp(hash, "0119a2cc7e7502d7ee512d22a293d19e") == 0);
 
+  fclose(fd);
   printf("[testTwoBlockCase] OK\n");
   return 1;
 }

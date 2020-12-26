@@ -1,9 +1,8 @@
+#include "md5.h"
 
 #include <unistd.h>
 #include <memory.h>
 #include <string.h>
-
-#include "md5.h"
 
 void State_init(State *s)
 {
@@ -196,22 +195,18 @@ Source_Status Source_read(FILE *fd, Source *s)
     return s->status;
   }
 
+  // Incomplete chunk, create padding (zeros except the first bit set to 1)
+  memset((unsigned char *)s->data + sz_read, 0, CHUNK_SIZE - sz_read);
+  ((unsigned char *)s->data)[sz_read] = BYTE_10000000;
   // We read just enough to have enough space to spare for the size
   if (sz_read < MAX_READ)
   {
-    // Incomplete chunk, fill padding with 0
-    memset((unsigned char *)s->data + sz_read, 0, CHUNK_SIZE - sz_read);
-    // set first bit after the data to 1
-    ((unsigned char *)s->data)[sz_read] = BYTE_10000000;
     append_size(s);
     s->status = DONE;
     return s->status;
   }
 
-  // We read too much: We will need to zero the remaining data,
-  // set the padding bits, and write the size on the next chunk
-  memset((unsigned char *)s->data + sz_read, 0, CHUNK_SIZE - sz_read);
-  ((unsigned char *)s->data)[sz_read] = BYTE_10000000;
+  // We read too much: We need to write the size on the next chunk
   s->status = PADDING_CHUNK;
   return s->status;
 }
