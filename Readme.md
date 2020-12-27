@@ -5,4 +5,5 @@ This repo is a collection of very small programs, usually only one file.
 * memoryAccessPattern : benchmark to evaluate differences in performance between random and sequential access to RAM
 * seamCarving : implementation of the seam carving technique
 * switchVsIfElse : benchmark to evaluate differences in performance between if/else and switch
+* md5: simple md5 implementation
 
