@@ -1,15 +1,18 @@
 HEADERS = *.h
 CFLAGS += -pedantic -Wall -Werror -std=c99
-#CFLAGS += -ggdb -O0
-CFLAGS += -O3 -DNDEBUG -march=native -mtune=native
+# Quick prod/test flag switch. Do not use the prod flag when testing
+# as it disable asserts. That's bad. But hey, you did not intend to use
+# this lib in production, did you?
+CFLAGS_PROD = $(CFLAGS) -O3 -DNDEBUG -march=native
+CFLAGS_TEST = $(CFLAGS) -ggdb -Og
 LDFLAGS += -std=c11
 
 ALL: md5
 
-.PHONY: clean test lint
+.PHONY: clean test
 
 %.o: %.c $(HEADERS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS_TEST)
 
 testtool: testtool.o lib.o
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -17,11 +20,8 @@ testtool: testtool.o lib.o
 check: testtool
 	./testtool
 
-lint: *.c
-	clang-tidy $^ $(CFLAGS)
-
 md5: md5.o lib.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f *.o test md5
+	rm -f *.o testtool md5

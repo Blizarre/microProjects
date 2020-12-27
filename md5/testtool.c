@@ -28,7 +28,7 @@ void display_data(Source* source) {
 
 
 int testZeroLengthData() {
-  //. Simple case: no data.
+  // Simple case: no data.
   char* data = "";
   FILE* fd = create_test_file(data, 0);
 
@@ -53,7 +53,7 @@ int testZeroLengthData() {
 
 
 int testSingleBlockCase() {
-  //. Simple case: data is much smaller than 512 bits.
+  // Simple case: data is much smaller than 512 bits.
   char* data = "Hello World";
   FILE* fd = create_test_file(data, 11);
 
@@ -79,7 +79,7 @@ int testSingleBlockCase() {
 
 
 int test56CharCase() {
-  //. Two block case: data is one byte too large
+  // Two block case: data is one byte too large
   char* data = "33333333333333333333333333333333333333333333333333333333";
   FILE* fd = create_test_file(data, 56);
 
@@ -111,7 +111,7 @@ int test56CharCase() {
 }
 
 int testTwoBlockCase() {
-  //. Two block case: data fit in 2 512 bits blocks.
+  // Two block case: data fit in 2 512 bits blocks.
   char* data = "01234567689012345676890123456768901234567689012345676890123456768901234567689";
   FILE* fd = create_test_file(data, 77);
 
@@ -144,7 +144,7 @@ int testTwoBlockCase() {
 }
 
 int testSingleBlockExtraPaddingCase() {
-  //. Two block case: data fit in a single 512 bits block, but is too large to fit the length
+  // Two block case: data fit in a single 512 bits block, but is too large to fit the length
 
   char* data = "01234567890123456789012345678901234567890123456789012345678";
   FILE* fd = create_test_file(data, 59);
@@ -180,7 +180,7 @@ int testSingleBlockExtraPaddingCase() {
 }
 
 int test2BlocksExtraPaddingCase() {
-  //. Two block case: data fit in two 512 bits block, but is too large to fit the length in the 2 blocks
+  // Two block case: data fit in two 512 bits block, but is too large to fit the length in the 2 blocks
 
   char* data = "012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789";
   FILE* fd = create_test_file(data, 120);
@@ -224,18 +224,22 @@ void testFullDataset() {
   char expected[32 + 1], generated[32 + 1], data[512]; // NULL char ending
   expected[32] = 0; // null-terminated string
   int size;
+  int szread;
 
   while(1) {
-    fread(expected, 32, 1, fd);
+    szread = fread(expected, 32, 1, fd);
     assert(!ferror(fd));
     if(feof(fd)) {
       printf("\n[testFullDataset] OK\n");
       fclose(fd);
       return;
     }
+    assert(szread == 1);
 
-    fread(&size, 4, 1, fd);
-    fread(data, size, 1, fd);
+    szread = fread(&size, 4, 1, fd);
+    assert(szread == 1);
+    szread = fread(data, size, 1, fd);
+    assert(szread == 1);
 
     FILE* fd_MD5 = create_test_file(data, size);
     md5(generated, fd_MD5);
