@@ -1,9 +1,9 @@
 HEADERS = *.h
 CFLAGS += -pedantic -Wall -Werror -std=c99
-# Quick prod/test flag switch. Do not use the prod flag when testing
-# as it disable asserts. That's bad. But hey, you did not intend to use
-# this lib in production, did you?
-CFLAGS_PROD = $(CFLAGS) -O3 -DNDEBUG -march=native
+# Quick release/test flag switch. The testtool binary will not build is used with
+# the RELEASE flags as it also disable the asserts and some variables are no longer
+# used anywhere. That's for your own good.
+CFLAGS_RELEASE = $(CFLAGS) -O3 -DNDEBUG -march=native
 CFLAGS_TEST = $(CFLAGS) -ggdb -Og
 LDFLAGS += -std=c11
 

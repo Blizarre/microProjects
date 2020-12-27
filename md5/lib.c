@@ -12,6 +12,12 @@ void State_init(State *s)
   s->D = 0x10325476; // 0x76543210
 }
 
+
+// F(X,Y,Z) = XY v not(X) Z
+// G(X,Y,Z) = XZ v Y not(Z)
+// H(X,Y,Z) = X xor Y xor Z
+// I(X,Y,Z) = Y xor (X v not(Z))
+
 uint32_t F(uint32_t X, uint32_t Y, uint32_t Z)
 {
   return (X & Y) | (~X & Z);
@@ -82,6 +88,15 @@ void md5_round4(Source *source, uint32_t *a, uint32_t *b, uint32_t *c, uint32_t 
   *a = *b + (rotl32a(*a + I(*b, *c, *d) + source->data[k] + T[i], s));
 }
 
+//    /* Round 1. */
+//   /* Let [abcd k s i] denote the operation
+//        a = b + ((a + F(b,c,d) + X[k] + T[i]) <<< s). */
+//   /* Do the following 16 operations. */
+//   [ABCD  0  7  1]  [DABC  1 12  2]  [CDAB  2 17  3]  [BCDA  3 22  4]
+//   [ABCD  4  7  5]  [DABC  5 12  6]  [CDAB  6 17  7]  [BCDA  7 22  8]
+//   [ABCD  8  7  9]  [DABC  9 12 10]  [CDAB 10 17 11]  [BCDA 11 22 12]
+//   [ABCD 12  7 13]  [DABC 13 12 14]  [CDAB 14 17 15]  [BCDA 15 22 16]
+// Note that T is 1-indexed in the RFC but 0-indexed in C
 int params_round1[4][4][3] = {
      {{ 0,  7,  0},  { 1, 12,  1},  {2, 17,  2}, {3, 22,  3}},
      {{ 4,  7,  4},  { 5, 12,  5},  {6, 17,  6}, {7, 22,  7}},
@@ -89,6 +104,7 @@ int params_round1[4][4][3] = {
      {{12,  7, 12},  {13, 12, 13},  {14, 17, 14}, {15, 22, 15}}
 };
 
+// Same as above but for round 2
 int params_round2[4][4][3] = {
      {{ 1, 5, 16},  {  6,  9, 17},  { 11, 14, 18},  {  0, 20, 19}},
      {{ 5, 5, 20},  { 10,  9, 21},  { 15, 14, 22},  {  4, 20, 23}},
@@ -96,6 +112,7 @@ int params_round2[4][4][3] = {
      {{13, 5, 28},  {  2,  9, 29},  {  7, 14, 30},  { 12, 20, 31}}
 };
 
+// Same as above but for round 2
 int params_round3[4][4][3] = {
      {{  5,  4, 32},  {  8, 11, 33},  { 11, 16, 34},  { 14, 23, 35}},
      {{  1,  4, 36},  {  4, 11, 37},  {  7, 16, 38},  { 10, 23, 39}},
@@ -103,6 +120,7 @@ int params_round3[4][4][3] = {
      {{  9,  4, 44},  { 12, 11, 45},  { 15, 16, 46},  {  2, 23, 47}}
 };
 
+// Same as above but for round 2
 int params_round4[4][4][3] = {
      {{  0,  6, 48},  {  7, 10, 49},  { 14, 15, 50},  {  5, 21, 51}},
      {{ 12,  6, 52},  {  3, 10, 53},  { 10, 15, 54},  {  1, 21, 55}},
@@ -110,6 +128,10 @@ int params_round4[4][4][3] = {
      {{  4,  6, 60},  { 11, 10, 61},  {  2, 15, 62},  {  9, 21, 63}}
 };
 
+// This macro is there to make the the code more readable. It assume that a row variable is available
+// which is the row in the param_round variable, and the second argument (col) is the column. if you compile
+// with -s you should see that the generated code match what is described in the RFC. I could have used function
+// pointers but I feared that the performance coest would have been too high. Thats something to check.
 #define ROUND(X, col, A, B, C, D) (md5_round##X(source, &state->A, &state->B, &state->C, &state->D, \
         params_round##X[row][col][0], params_round##X[row][col][1], params_round##X[row][col][2]))
 
@@ -122,7 +144,6 @@ void State_iterate(State *state, Source *source)
   for (row = 0; row < 4; row++)
   {
     ROUND(1, 0, A, B, C, D);
-//    printf("%d A=%u B=%u C=%u D=%u\n", iter++, state->A, state->B, state->C, state->D);
     ROUND(1, 1, D, A, B, C);
     ROUND(1, 2, C, D, A, B);
     ROUND(1, 3, B, C, D, A);
@@ -163,7 +184,7 @@ void State_iterate(State *state, Source *source)
 
 void append_size(Source *s)
 {
-  ((uint64_t *)s->data)[CHUNK_SIZE_U64 - 1] = s->size * 8; // We write the number of bits
+  ((uint64_t *)s->data)[CHUNK_SIZE_U64 - 1] = s->size * 8; // We write the number of bits as a 64-bit value
 }
 
 Source_Status Source_read(FILE *fd, Source *s)
@@ -211,6 +232,7 @@ Source_Status Source_read(FILE *fd, Source *s)
   return s->status;
 }
 
+// print the number in hex, littel-endian style
 void sprintf_u32_le(uint32_t number, char* hash) {
   int i;
   for(i=0; i<sizeof(uint32_t); i++) {
@@ -218,6 +240,7 @@ void sprintf_u32_le(uint32_t number, char* hash) {
   }
 }
 
+// Write the A, B, C, D in that order, but in little-endian mode (reversed)
 void State_to_hash(State* state, char* hash) {
   sprintf_u32_le(state->A, hash);
   sprintf_u32_le(state->B, hash + 2 * 1 * sizeof(uint32_t)); // 2 char for each byte x 1 x 4 bytes for a single uint32

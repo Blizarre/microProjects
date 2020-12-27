@@ -39,6 +39,10 @@ uint32_t D;
 // High-level API
 Source_Status md5(char* hash, FILE* fd);
 
+// Low-level API: Source* deal with reading the input data from a file
+// and prepare the data as chunks to be passed to the State* functions
+// that will do the md5 magic. You can have a look at the md5.c file or
+// the testtool file for examples on how to use them.
 void State_init(State *s);
 void Source_init(Source* s);
 int Source_continue(Source* s);
