@@ -128,10 +128,10 @@ int params_round4[4][4][3] = {
      {{  4,  6, 60},  { 11, 10, 61},  {  2, 15, 62},  {  9, 21, 63}}
 };
 
-// This macro is there to make the the code more readable. It assume that a row variable is available
-// which is the row in the param_round variable, and the second argument (col) is the column. if you compile
-// with -s you should see that the generated code match what is described in the RFC. I could have used function
-// pointers but I feared that the performance coest would have been too high. Thats something to check.
+// This macro is there to make the the code more readable. It assume that a `row` variable is available
+// which is the row in the `param_round` variable, and the second argument `col` is the column. if you compile
+// with -s you should see that the generated code matches what is described in the RFC. I could have used function
+// pointers but I feared that the performance cost would have been too high. That is something to check.
 #define ROUND(X, col, A, B, C, D) (md5_round##X(source, &state->A, &state->B, &state->C, &state->D, \
         params_round##X[row][col][0], params_round##X[row][col][1], params_round##X[row][col][2]))
 
