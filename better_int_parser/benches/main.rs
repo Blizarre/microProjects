@@ -10,8 +10,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     let data = contents.as_bytes();
     assert_eq!(parseint(data), parseint_sse(data));
 
-    c.bench_function("small sample", |b| b.iter(|| parseint(black_box(data))));
-    c.bench_function("small sample", |b| b.iter(|| parseint_sse(black_box(data))));
+    c.bench_function("small sample Naive", |b| b.iter(|| parseint(black_box(data))));
+    c.bench_function("small sample SSE", |b| b.iter(|| parseint_sse(black_box(data))));
 }
 
 criterion_group!(benches, criterion_benchmark);
