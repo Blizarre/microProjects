@@ -11,6 +11,10 @@ criterion = "0.3"
 [dependencies]
 rand = "0.8.5"
 
+[profile.release]
+opt-level=3
+lto=true
+target-cpu="native"
 
 [[bench]]
 name = "main"
