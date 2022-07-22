@@ -1,4 +1,4 @@
-use better_int_parser::{parseint, parseint_simple, parseint_avx};
+use better_int_parser::{parseint, parseint_avx, parseint_simple};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::fs::File;
 use std::io::prelude::*;

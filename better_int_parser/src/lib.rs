@@ -133,8 +133,7 @@ pub fn parseint_avx(buffer: &[u8]) -> u64 {
 
     // The bytes that remains will always be done without SSE. That way we don't need to do any array
     // bound checking in the above code
-    for remain_index in index..buffer.len() {
-        let val = buffer[remain_index];
+    for val in buffer[index..buffer.len()].iter() {
         if number >= 0 {
             if val.is_ascii_digit() {
                 number *= 10;
