@@ -1,4 +1,8 @@
-# Small helper project to help me solve https://highload.fun/tasks/1
+# Small helper project to help me solve challenges on highload.fun
+
+# parseint
+
+https://highload.fun/tasks/1
 
 Always compare a semi-naive implementation with a fast one, and run tests to make sure that it is valid.
 
