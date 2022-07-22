@@ -3,6 +3,7 @@ mod tests {
     use super::*;
     use better_int_parser::parseint;
     use better_int_parser::parseint_simple;
+    use better_int_parser::parseint_avx;
 
     #[test]
     fn various_values() {
@@ -21,7 +22,7 @@ mod tests {
         for (data, res) in test_values.iter() {
             println!("{}", std::str::from_utf8(data).expect("Invalid test data"));
             assert_eq!(parseint(data), *res);
-            //assert_eq!(parseint_sse(data), *res);
+            assert_eq!(parseint_avx(data), *res);
             assert_eq!(parseint_simple(data), *res);
         }
     }

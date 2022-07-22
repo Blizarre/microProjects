@@ -15,7 +15,9 @@ fn criterion_benchmark(c: &mut Criterion) {
     group.bench_function("small sample Naive", |b| {
         b.iter(|| parseint(black_box(data)))
     });
-    //group.bench_function("small sample SSE", |b| b.iter(|| parseint_sse(black_box(data))));
+    group.bench_function("small sample SSE", |b| {
+        b.iter(|| parseint_sse(black_box(data)))
+    });
     group.bench_function("small sample Naive 2", |b| {
         b.iter(|| parseint_simple(black_box(data)))
     });
