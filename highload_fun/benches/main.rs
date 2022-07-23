@@ -1,5 +1,5 @@
-use better_int_parser::{parseint, parseint_avx, parseint_simple};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use highload_fun::parse_int::{parse_int, parse_int_avx, parse_int_simple};
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -10,16 +10,17 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut contents = String::new();
     testfile.read_to_string(&mut contents).unwrap();
     let data = contents.as_bytes();
-    assert_eq!(parseint(data), parseint_simple(data));
+    assert_eq!(parse_int(data), parse_int_simple(data));
+    assert_eq!(parse_int(data), parse_int_avx(data));
 
     group.bench_function("small sample Naive", |b| {
-        b.iter(|| parseint(black_box(data)))
+        b.iter(|| parse_int(black_box(data)))
     });
     group.bench_function("small sample AVX", |b| {
-        b.iter(|| parseint_avx(black_box(data)))
+        b.iter(|| parse_int_avx(black_box(data)))
     });
     group.bench_function("small sample Naive 2", |b| {
-        b.iter(|| parseint_simple(black_box(data)))
+        b.iter(|| parse_int_simple(black_box(data)))
     });
 }
 

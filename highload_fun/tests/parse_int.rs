@@ -1,8 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use better_int_parser::parseint;
-    use better_int_parser::parseint_avx;
-    use better_int_parser::parseint_simple;
+    use highload_fun::parse_int::{parse_int, parse_int_avx, parse_int_simple};
 
     #[test]
     fn various_values() {
@@ -20,9 +18,9 @@ mod tests {
         ];
         for (data, res) in test_values.iter() {
             println!("{}", std::str::from_utf8(data).expect("Invalid test data"));
-            assert_eq!(parseint(data), *res);
-            assert_eq!(parseint_avx(data), *res);
-            assert_eq!(parseint_simple(data), *res);
+            assert_eq!(parse_int(data), *res);
+            assert_eq!(parse_int_avx(data), *res);
+            assert_eq!(parse_int_simple(data), *res);
         }
     }
 }

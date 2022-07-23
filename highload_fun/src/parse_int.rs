@@ -12,7 +12,7 @@ use std::arch::x86_64::_mm256_set1_epi32;
 use std::arch::x86_64::_mm256_set_epi32;
 use std::arch::x86_64::_mm256_sub_epi32;
 
-pub fn parseint(buffer: &[u8]) -> u64 {
+pub fn parse_int(buffer: &[u8]) -> u64 {
     let mut number = -1i32;
     let mut accumulator = 0u64;
 
@@ -35,7 +35,7 @@ pub fn parseint(buffer: &[u8]) -> u64 {
     accumulator
 }
 
-pub fn parseint_simple(buffer: &[u8]) -> u64 {
+pub fn parse_int_simple(buffer: &[u8]) -> u64 {
     let mut number = 0u32;
     let mut accumulator = 0u64;
     let mut idx = 0;
@@ -75,7 +75,7 @@ pub unsafe fn get_val_unchecked(buffer: &[u8], index: usize) -> i32 {
     *buffer.get_unchecked(index) as i32
 }
 
-pub fn parseint_avx(buffer: &[u8]) -> u64 {
+pub fn parse_int_avx(buffer: &[u8]) -> u64 {
     let mut number = 0i32;
     let mut accumulator = 0u64;
 
