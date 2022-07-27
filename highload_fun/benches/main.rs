@@ -1,6 +1,7 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use highload_fun::count_uint8::count_uint8;
 use highload_fun::count_uint8::count_uint8_avx;
+use highload_fun::count_uint8::count_uint8_avx_full;
 use highload_fun::parse_int::{parse_int, parse_int_avx, parse_int_simple};
 use std::arch::x86_64::__m256i;
 use std::fs::File;
@@ -41,8 +42,10 @@ fn count_uint8_group(c: &mut Criterion) {
     aligned.copy_from_slice(&contents);
 
     group.bench_function("Naive", |b| b.iter(|| count_uint8(black_box(aligned))));
-
     group.bench_function("AVX", |b| b.iter(|| count_uint8_avx(black_box(aligned))));
+    group.bench_function("Full AVX", |b| {
+        b.iter(|| count_uint8_avx_full(black_box(aligned)))
+    });
 }
 
 criterion_group!(benches, parse_int_group, count_uint8_group);
