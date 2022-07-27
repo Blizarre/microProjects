@@ -2,6 +2,7 @@
 mod tests {
     use highload_fun::count_uint8::count_uint8;
     use highload_fun::count_uint8::count_uint8_avx;
+    use highload_fun::count_uint8::count_uint8_avx_full;
     use std::arch::x86_64::__m256i;
 
     #[test]
@@ -42,10 +43,12 @@ mod tests {
             let length = data.len();
             aligned[..length].copy_from_slice(data);
             let aligned_data = &aligned[..length];
-            println!("Test short {} count_uint8", idx);
+            println!("Test {} count_uint8", idx);
             assert_eq!(count_uint8(aligned_data), *res);
-            println!("Test short {} count_uint8_sse", idx);
+            println!("Test {} count_uint8_avx", idx);
             assert_eq!(count_uint8_avx(aligned_data), *res);
+            println!("Test {} count_uint8_avx_full", idx);
+            assert_eq!(count_uint8_avx_full(aligned_data), *res);
         }
     }
 }
