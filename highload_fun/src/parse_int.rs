@@ -96,7 +96,7 @@ pub fn parse_int_avx(buffer: &[u8]) -> u64 {
             // Now we will try to parse the beginning of the next number using AVX
             unsafe {
                 let avx_number = _mm256_set_epi32(
-                    get_val_unchecked(buffer, index + 0),
+                    get_val_unchecked(buffer, index),
                     get_val_unchecked(buffer, index + 1),
                     get_val_unchecked(buffer, index + 2),
                     get_val_unchecked(buffer, index + 3),
