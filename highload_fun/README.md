@@ -1,10 +1,12 @@
-# Small helper project to help me solve challenges on highload.fun
+# Small helper project to help me solve challenges on highload_fun
 
 # parseint
 
 https://highload.fun/tasks/1
 
-Always compare a semi-naive implementation with a fast one, and run tests to make sure that it is valid.
+# count_uint8
+
+https://highload.fun/tasks/5
 
 ## Generate some test data (1MB):
 ```
