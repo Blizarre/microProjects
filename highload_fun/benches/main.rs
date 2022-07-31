@@ -2,7 +2,11 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use highload_fun::count_uint8::count_uint8;
 use highload_fun::count_uint8::count_uint8_avx;
 use highload_fun::count_uint8::count_uint8_avx_full;
+use highload_fun::count_uint8::count_uint8_avx_full_2;
 use highload_fun::parse_int::{parse_int, parse_int_avx, parse_int_simple};
+use highload_fun::print_usize::print_usize_different;
+use highload_fun::print_usize::MAX_U64_LENGTH;
+use highload_fun::print_usize::{print_usize_fast, print_usize_naive};
 use std::arch::x86_64::__m256i;
 use std::fs::File;
 use std::io::prelude::*;
@@ -46,7 +50,37 @@ fn count_uint8_group(c: &mut Criterion) {
     group.bench_function("Full AVX", |b| {
         b.iter(|| count_uint8_avx_full(black_box(aligned)))
     });
+    group.bench_function("Full AVX v2", |b| {
+        b.iter(|| count_uint8_avx_full_2(black_box(aligned)))
+    });
 }
 
-criterion_group!(benches, parse_int_group, count_uint8_group);
+fn print_usize_group(c: &mut Criterion) {
+    let mut group = c.benchmark_group("Print usize number");
+    let test_number = 1234567890123456789;
+    let mut test_buffer = [0u8; MAX_U64_LENGTH];
+    group.bench_function("Naive", |b| {
+        b.iter(|| black_box(print_usize_naive(black_box(test_number))))
+    });
+    group.bench_function("fast", |b| {
+        b.iter(|| {
+            black_box(print_usize_fast(black_box(test_number), &mut test_buffer));
+        })
+    });
+    group.bench_function("different", |b| {
+        b.iter(|| {
+            black_box(print_usize_different(
+                black_box(test_number),
+                &mut test_buffer,
+            ));
+        })
+    });
+}
+
+criterion_group!(
+    benches,
+    parse_int_group,
+    count_uint8_group,
+    print_usize_group
+);
 criterion_main!(benches);

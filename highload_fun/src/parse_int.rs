@@ -71,6 +71,10 @@ unsafe fn hsum_double_avx(v: __m256i) -> i32 {
     _mm_cvtsi128_si32(vlow128)
 }
 
+/// Get a single value from the buffer and cast it as 32
+///
+/// # Safety
+/// Won't check for array boundaries
 pub unsafe fn get_val_unchecked(buffer: &[u8], index: usize) -> i32 {
     *buffer.get_unchecked(index) as i32
 }
