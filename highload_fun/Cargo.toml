@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dev-dependencies]
-criterion = {version="0.3", features=["html_reports"]}
+criterion = {version="0.4.0", features=["html_reports"]}
 
 [dependencies]
 rand = "0.8.5"
