@@ -7,4 +7,6 @@ This repo is a collection of very small programs, usually only one file.
 * seamCarving : implementation of the seam carving technique
 * switchVsIfElse : benchmark to evaluate differences in performance between if/else and switch
 * md5: simple md5 implementation
+* async\_test: Small test for async rust programming (fetch urls in parallel)
+* highload\_fun: Small helper project to help me solve challenges on highload\_fun
 
