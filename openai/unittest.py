@@ -22,9 +22,9 @@ messages = [
     }
 ]
 
-response = openai.ChatCompletion.create(model="gpt-4", messages=messages, n = args.n)
+response = openai.ChatCompletion.create(model="gpt-4", messages=messages, n=args.n)
 
-print("\n---\n".join([ choice.message.content for choice in response.choices]))
+print("\n---\n".join([choice.message.content for choice in response.choices]))
 
 
 if args.verbose:
