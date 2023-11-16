@@ -1,15 +1,17 @@
-from flask import Flask, request, send_file
-import requests
-from openai import OpenAI
 import os
 
-if os.path.isfile("key"):
-    with open("key") as fd:
-        api_key = fd.readline()
-else:
-    api_key = None
+from flask import Flask, request, send_file
+from openai import OpenAI
 
-client = OpenAI(api_key=api_key)
+
+def api_key():
+    if os.path.isfile("key"):
+        with open("key", encoding="utf=8") as fd:
+            return fd.readline().strip()
+    return None
+
+
+client = OpenAI(api_key=api_key())
 
 app = Flask(__name__)
 
