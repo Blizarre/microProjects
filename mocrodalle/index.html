@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Generator</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        textarea {
+            width: 80vh;
+            height: 20vh;
+            margin: 10px;
+        }
+        form {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <form id="image-form">
+        <textarea id="text-input" required></textarea>
+        <br/>
+        <input type="submit" value="Generate Image">
+    </form>
+    <img id="result-image" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Generated Image">
+
+<script>
+document.getElementById('image-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    var text = document.getElementById('text-input').value;
+    document.getElementById('result-image').src = "inprogress.gif";
+
+    fetch('/generate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ text: text })
+    })
+    .then(response => response.text())
+    .then(data => {
+        document.getElementById('result-image').src = data;
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+});
+</script>
+
+</body>
+</html>
