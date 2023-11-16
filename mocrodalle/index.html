@@ -1,49 +1,63 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-    <title>Image Generator</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <style>
-        textarea {
-            width: 80vh;
-            height: 20vh;
-            margin: 10px;
-        }
-        form {
-            margin: 5px;
-        }
-    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <title>Bootstrap Form</title>
 </head>
 <body>
-    <form id="image-form">
-        <textarea id="text-input" required></textarea>
-        <br/>
-        <input type="submit" value="Generate Image">
-    </form>
-    <img id="result-image" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Generated Image">
+    <div class="container">
+        <form id="image-form" class="mb-3">
+            <div class="form-group">
+                <label for="prompt">Prompt</label>
+                <textarea class="form-control" id="prompt" rows="3"></textarea>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="hd">
+                <label class="form-check-label" for="hd">HD</label>
+            </div>
+            <div class="form-group">
+                <label for="size">Size</label>
+                <select class="form-control" id="size">
+                    <option>1024x1024</option>
+                    <option>1024x1792</option>
+                    <option>1792x1024</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Generate</button>
+        </form>
+        <img class="img-fluid" id="result-image" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Generated Image">
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 
-<script>
-document.getElementById('image-form').addEventListener('submit', function(event) {
-    event.preventDefault();
-    var text = document.getElementById('text-input').value;
-    document.getElementById('result-image').src = "inprogress.gif";
+    <script>
+    document.getElementById('image-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        var prompt = document.getElementById('prompt').value;
+        var hd = document.getElementById('hd').checked ? "hd":"standard";
+        var size = document.getElementById('size').value;
 
-    fetch('/generate', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ text: text })
-    })
-    .then(response => response.text())
-    .then(data => {
-        document.getElementById('result-image').src = data;
-    })
-    .catch((error) => {
-        console.error('Error:', error);
+        document.getElementById('result-image').src = "inprogress.gif";
+
+        fetch('/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ prompt: prompt, hd: hd, size:size })
+        })
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('result-image').src = data;
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
     });
-});
-</script>
+    </script>
 
 </body>
 </html>
