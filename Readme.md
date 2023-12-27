@@ -9,4 +9,4 @@ This repo is a collection of very small programs, usually only one file.
 * md5: simple md5 implementation
 * async\_test: Small test for async rust programming (fetch urls in parallel)
 * highload\_fun: Small helper project to help me solve challenges on highload\_fun
-
+* C: A tool for quick directory traversal with fzf for the `fish` shell
