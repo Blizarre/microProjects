@@ -1,0 +1,4 @@
+haystack-ai
+chroma-haystack
+ollama-haystack
+elasticsearch-haystack⏎

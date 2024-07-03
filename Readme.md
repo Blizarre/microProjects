@@ -10,3 +10,4 @@ This repo is a collection of very small programs, usually only one file.
 * async\_test: Small test for async rust programming (fetch urls in parallel)
 * highload\_fun: Small helper project to help me solve challenges on highload\_fun
 * C: A tool for quick directory traversal with fzf for the `fish` shell
+* weekend_rag: A quick experiment with RAG (AKA AI Search) that I did over the weekend
