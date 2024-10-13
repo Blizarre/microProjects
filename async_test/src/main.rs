@@ -22,11 +22,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let options = Opts::parse();
     let mut promises = vec![];
 
-
     let path = PathBuf::from(options.directory);
 
     log::info!("Starting the requests");
     for url in options.urls {
+        println!("00");
         promises.push(fetch_file(Url::parse(&url)?, path.clone()));
     }
 
@@ -40,17 +40,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn fetch_file(url: Url, path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+    println!("aa");
     let file_name = path.join(
         url.path_segments()
             .and_then(|x| x.last())
-            .and_then(|x| if x.len() == 0 { None } else { Some(x) })
+            .and_then(|x| if x.is_empty() { None } else { Some(x) })
             .unwrap_or("unknown.txt"),
     );
 
     log::info!("Fetching {:?} into {:?}", url, file_name);
 
     let client = Client::new();
+    println!("bb");
     let mut file = File::create(file_name).await?;
+    println!("cc");
 
     let response = client.get(url.clone()).send().await?;
 
