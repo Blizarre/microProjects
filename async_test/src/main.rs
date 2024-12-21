@@ -26,7 +26,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     log::info!("Starting the requests");
     for url in options.urls {
-        println!("00");
         promises.push(fetch_file(Url::parse(&url)?, path.clone()));
     }
 
@@ -40,7 +39,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn fetch_file(url: Url, path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
-    println!("aa");
     let file_name = path.join(
         url.path_segments()
             .and_then(|x| x.last())
@@ -51,9 +49,7 @@ async fn fetch_file(url: Url, path: PathBuf) -> Result<(), Box<dyn std::error::E
     log::info!("Fetching {:?} into {:?}", url, file_name);
 
     let client = Client::new();
-    println!("bb");
     let mut file = File::create(file_name).await?;
-    println!("cc");
 
     let response = client.get(url.clone()).send().await?;
 
